@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>出差调休 · 工作记录</title>
+    <!-- 
+        版权所有 © 2026 高鹤鸣 (1277161210@qq.com)
+        本工具仅供个人使用，未经许可严禁用于商业用途、转售或二次分发。
+    -->
+    <meta name="author" content="高鹤鸣">
+    <meta name="copyright" content="© 2026 高鹤鸣 - 仅限个人使用，禁止商用">
+    
+    <style>
+        * { box-sizing: border-box; margin: 0; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+        body { background: #f5f7fb; padding: 16px; min-height: 100vh; display: flex; justify-content: center; align-items: flex-start; }
+        .app { max-width: 1080px; width: 100%; background: #ffffff; border-radius: 32px; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08); padding: 24px 20px 32px; margin-bottom: 24px; display: none; }
+        .app.show { display: block; }
+        
+        #authOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f5f7fb; display: flex; justify-content: center; align-items: center; z-index: 9999; }
+        .auth-box { background: #fff; padding: 40px; border-radius: 24px; box-shadow: 0 12px 30px rgba(0,0,0,0.08); text-align: center; max-width: 400px; width: 90%; }
+        .auth-box h2 { color: #1a2639; margin-bottom: 12px; }
+        .auth-box p { color: #5e6f8d; font-size: 0.9rem; margin-bottom: 24px; }
+        .auth-box input { width: 100%; padding: 14px; border: 1.5px solid #dbe2eb; border-radius: 16px; font-size: 1rem; margin-bottom: 16px; outline: none; }
+        .auth-box input:focus { border-color: #3b82f6; }
+        .auth-box button { width: 100%; padding: 14px; border: none; border-radius: 16px; background: #3b82f6; color: white; font-size: 1rem; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .auth-box button:hover { background: #2563eb; }
+        .auth-error { color: #ef4444; font-size: 0.85rem; margin-bottom: 12px; min-height: 20px; }
+        
+        h1 { font-size: 1.7rem; font-weight: 600; color: #1a2639; letter-spacing: -0.02em; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .subhead { color: #5e6f8d; font-size: 0.9rem; margin-bottom: 24px; border-left: 4px solid #3b82f6; padding-left: 12px; background: #f0f4ff; border-radius: 0 12px 12px 0; line-height: 1.4; padding: 8px 12px; }
+        .tabs { display: flex; gap: 8px; background: #eef2f6; padding: 6px; border-radius: 48px; margin-bottom: 24px; flex-wrap: wrap; }
+        .tab-btn { flex: 1 0 auto; background: transparent; border: none; padding: 12px 10px; border-radius: 40px; font-weight: 600; font-size: 0.85rem; color: #4a5a72; transition: all 0.2s; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
+        .tab-btn.active { background: #ffffff; color: #1e40af; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); }
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; }
+        .card { background: #ffffff; border: 1px solid #e9eef3; border-radius: 24px; padding: 20px 18px; margin-bottom: 18px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02); }
+        .card-title { font-size: 1.1rem; font-weight: 600; color: #1a2639; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .field-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+        .field-row label { font-size: 0.85rem; font-weight: 500; color: #5e6f8d; text-transform: uppercase; letter-spacing: 0.3px; }
+        input, select, textarea { width: 100%; padding: 12px 14px; border: 1.5px solid #dbe2eb; border-radius: 16px; font-size: 0.95rem; background: #fafcff; transition: 0.2s; outline: none; }
+        input:focus, select:focus, textarea:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); background: #ffffff; }
+        textarea { resize: vertical; min-height: 80px; }
+        .status-group { display: flex; gap: 10px; flex-wrap: wrap; }
+        .status-option { flex: 1 0 80px; display: flex; align-items: center; justify-content: center; gap: 6px; background: #f0f4fa; padding: 12px 0; border-radius: 40px; font-weight: 500; color: #2c3e50; border: 1.5px solid transparent; cursor: pointer; transition: all 0.15s; font-size: 0.9rem; }
+        .status-option.selected { background: #ffffff; border-color: #3b82f6; color: #1e40af; font-weight: 600; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15); }
+        .btn { border: none; padding: 14px 20px; border-radius: 48px; font-weight: 600; font-size: 1rem; background: #3b82f6; color: white; cursor: pointer; transition: background 0.15s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 6px 14px rgba(59, 130, 246, 0.25); }
+        .btn:hover { background: #2563eb; }
+        .btn-outline { background: transparent; color: #3b82f6; border: 1.5px solid #3b82f6; box-shadow: none; }
+        .btn-outline:hover { background: #eef4ff; }
+        .btn-sm { padding: 8px 14px; font-size: 0.8rem; border-radius: 30px; box-shadow: none; }
+        .btn-danger { background: #ef4444; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2); }
+        .btn-danger:hover { background: #dc2626; }
+        .flex-between { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+        .tag { display: inline-block; background: #e6f0ff; color: #1e40af; padding: 4px 10px; border-radius: 40px; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.3px; }
+        .tag-green { background: #e0f7ea; color: #0f6e3f; }
+        .tag-orange { background: #fff0e0; color: #b45309; }
+        .tag-red { background: #ffe6e6; color: #b91c1c; }
+        .tag-purple { background: #f3e8ff; color: #6b21a8; }
+        .record-list, .balance-list { display: flex; flex-direction: column; gap: 12px; max-height: 420px; overflow-y: auto; padding-right: 4px; }
+        .record-item, .balance-item { background: #f9fcff; border: 1px solid #e7edf5; border-radius: 20px; padding: 16px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; transition: 0.1s; }
+        .record-info, .balance-info { flex: 1 1 180px; }
+        .record-date { font-weight: 700; color: #1a2639; font-size: 1rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .record-desc { color: #4f5f74; font-size: 0.9rem; margin-top: 4px; word-break: break-word; }
+        .record-actions { display: flex; gap: 6px; }
+        .icon-btn { background: transparent; border: none; font-size: 1.1rem; cursor: pointer; padding: 6px 8px; border-radius: 40px; transition: 0.1s; display: flex; align-items: center; justify-content: center; color: #5e6f8d; }
+        .icon-btn:hover { background: #e2e8f0; color: #1a2639; }
+        .summary-grid { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+        .summary-card { background: #ffffff; border-radius: 20px; padding: 16px 18px; flex: 1 1 120px; border: 1px solid #e9eef3; text-align: center; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02); }
+        .summary-value { font-size: 2.1rem; font-weight: 700; color: #1e40af; line-height: 1.2; }
+        .summary-label { color: #5e6f8d; font-size: 0.8rem; font-weight: 500; letter-spacing: 0.3px; text-transform: uppercase; }
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 14px 24px; border-radius: 60px; font-weight: 500; font-size: 0.95rem; box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2); z-index: 10000; transition: opacity 0.2s; opacity: 0; pointer-events: none; white-space: nowrap; max-width: 90vw; overflow: hidden; text-overflow: ellipsis; }
+        .toast.show { opacity: 1; }
+        .empty-state { color: #8b9bb5; text-align: center; padding: 32px 16px; font-size: 0.95rem; background: #f8fafd; border-radius: 20px; }
+        .calendar-wrapper { background: #f9fcff; border-radius: 24px; padding: 16px; margin-top: 8px; }
+        .calendar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+        .cal-day-label { text-align: center; font-size: 0.75rem; font-weight: 600; color: #5e6f8d; padding: 6px 0; }
+        .cal-day { aspect-ratio: 1 / 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 12px; font-size: 0.85rem; font-weight: 500; background: white; border: 1px solid #e9eef3; color: #1a2639; transition: 0.1s; cursor: default; position: relative; user-select: none; }
+        .cal-day.weekend { background: #fff8f0; border-color: #ffe0c0; }
+        .cal-day.has-record { font-weight: 700; border-color: #3b82f6; background: #eef4ff; }
+        .cal-day .dot { width: 6px; height: 6px; border-radius: 10px; background: #3b82f6; margin-top: 2px; }
+        .cal-day.ot-dot .dot { background: #f59e0b; }
+        .cal-multi-badge { position: absolute; top: 2px; right: 4px; font-size: 0.6rem; font-weight: 700; color: #1e40af; background: #dbeafe; border-radius: 20px; padding: 1px 5px; line-height: 1.4; }
+        .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eef2f6; gap: 12px; flex-wrap: wrap; }
+        .settings-row:last-child { border-bottom: none; }
+        .settings-label { font-weight: 500; color: #1a2639; font-size: 0.95rem; }
+        .settings-hint { font-size: 0.75rem; color: #6b7b94; margin-top: 2px; }
+        .toggle-switch { display: flex; gap: 8px; background: #f0f4fa; padding: 4px; border-radius: 40px; }
+        .toggle-option { padding: 8px 16px; border-radius: 30px; font-size: 0.8rem; font-weight: 500; cursor: pointer; color: #4a5a72; background: transparent; transition: 0.1s; }
+        .toggle-option.active { background: white; color: #1e40af; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04); font-weight: 600; }
+        .input-small { width: 80px; padding: 8px 12px; text-align: center; }
+        .flex-inline { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .person-list { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+        .person-chip { background: #eef4ff; border-radius: 40px; padding: 8px 14px; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; font-weight: 500; color: #1e40af; border: 1px solid #dbeafe; }
+        .person-chip .remove-person { cursor: pointer; color: #6b7b94; font-weight: 700; margin-left: 4px; }
+        .person-chip .remove-person:hover { color: #b91c1c; }
+        .batch-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        .batch-table th { text-align: left; padding: 10px 8px; font-size: 0.8rem; font-weight: 600; color: #5e6f8d; border-bottom: 1px solid #e7edf5; }
+        .batch-table td { padding: 10px 8px; border-bottom: 1px solid #f0f4fa; vertical-align: middle; }
+        .batch-table tr:last-child td { border-bottom: none; }
+        .batch-input { padding: 8px 10px; font-size: 0.85rem; border-radius: 10px; }
+        .batch-select { padding: 8px 8px; font-size: 0.85rem; border-radius: 10px; }
+        .batch-actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+        .batch-card { overflow-x: auto; }
+        .person-manager { display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+        .person-manager input { flex: 2; min-width: 150px; }
+        .person-manager button { flex: 0 0 auto; }
+        .small-note { font-size: 0.75rem; color: #6b7b94; margin-top: 6px; }
+        .export-options { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+        .export-option { display: flex; align-items: center; gap: 10px; background: #f9fcff; padding: 14px 16px; border-radius: 16px; border: 1px solid #e7edf5; cursor: pointer; transition: 0.1s; }
+        .export-option:hover { background: #eef4ff; border-color: #b8d0f0; }
+        .export-option input[type="checkbox"] { width: 20px; height: 20px; margin: 0; accent-color: #3b82f6; flex: 0 0 auto; }
+        .export-option-label { flex: 1; font-weight: 500; color: #1a2639; }
+        .export-option-desc { font-size: 0.8rem; color: #6b7b94; font-weight: 400; display: block; margin-top: 2px; }
+        .export-format { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+        .format-btn { flex: 1 0 100px; padding: 12px 20px; border-radius: 40px; border: 1.5px solid #dbe2eb; background: #fafcff; font-weight: 600; color: #4a5a72; cursor: pointer; text-align: center; transition: 0.15s; }
+        .format-btn.active { border-color: #3b82f6; background: #eef4ff; color: #1e40af; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15); }
+        .format-btn:hover { border-color: #3b82f6; }
+        .export-preview { background: #f8fafd; border-radius: 16px; padding: 14px 16px; font-size: 0.85rem; color: #5e6f8d; margin-bottom: 16px; border-left: 4px solid #3b82f6; }
+        .export-preview strong { color: #1a2639; }
+        .import-area { background: #f9fcff; border: 2px dashed #cbd5e1; border-radius: 20px; padding: 24px; text-align: center; transition: 0.2s; cursor: pointer; margin-bottom: 16px; }
+        .import-area:hover, .import-area.dragover { background: #eef4ff; border-color: #3b82f6; }
+        .import-area input[type="file"] { display: none; }
+        .import-icon { font-size: 2rem; margin-bottom: 8px; }
+        .import-text { color: #4f5f74; font-size: 0.95rem; }
+        .import-sub { font-size: 0.8rem; color: #8b9bb5; margin-top: 4px; }
+        .import-hint { margin-top: 16px; font-size: 0.85rem; color: #5e6f8d; }
+        .backup-card { background: #f0f9f0; border: 1px solid #bbf7d0; border-radius: 20px; padding: 18px; margin-bottom: 16px; }
+        .backup-title { font-weight: 600; color: #166534; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .backup-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+        .danger-zone { border-color: #fee2e2; background: #fff5f5; }
+        .danger-title { color: #b91c1c; }
+        .cal-filter-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; background: #f0f4fa; padding: 10px 14px; border-radius: 40px; }
+        .cal-filter-bar label { font-size: 0.85rem; font-weight: 500; color: #4a5a72; white-space: nowrap; }
+        .cal-filter-select { flex: 1; min-width: 140px; padding: 10px 12px; border-radius: 30px; border: 1.5px solid #dbe2eb; background: white; font-size: 0.9rem; font-weight: 500; color: #1a2639; cursor: pointer; }
+        .cal-filter-select:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+        .cal-legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.8rem; margin-top: 16px; color: #5e6f8d; }
+        .cal-legend span { display: flex; align-items: center; gap: 4px; }
+        .date-range-picker { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; background: #f0f4fa; padding: 12px 16px; border-radius: 20px; margin-bottom: 16px; }
+        .date-range-picker .field-row { flex: 1; min-width: 120px; margin-bottom: 0; }
+        .date-range-picker label { font-size: 0.75rem; }
+        .range-preview { font-size: 0.85rem; color: #1e40af; font-weight: 600; background: #dbeafe; padding: 6px 12px; border-radius: 30px; white-space: nowrap; }
+        .person-checkbox-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; padding: 12px; background: #f9fcff; border-radius: 16px; border: 1px solid #e7edf5; max-height: 160px; overflow-y: auto; }
+        .person-checkbox-item { display: flex; align-items: center; gap: 6px; background: #ffffff; padding: 6px 12px; border-radius: 30px; border: 1px solid #e2e8f0; font-size: 0.9rem; cursor: pointer; transition: 0.1s; }
+        .person-checkbox-item:hover { border-color: #3b82f6; }
+        .person-checkbox-item input { width: 16px; height: 16px; margin: 0; accent-color: #3b82f6; }
+        .person-checkbox-item.checked { background: #eef4ff; border-color: #3b82f6; color: #1e40af; font-weight: 500; }
+        .person-quick-select { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+        .person-quick-select button { font-size: 0.75rem; padding: 6px 12px; border-radius: 30px; border: 1px solid #dbe2eb; background: #fafcff; cursor: pointer; color: #4a5a72; font-weight: 500; transition: 0.1s; }
+        .person-quick-select button:hover { border-color: #3b82f6; color: #1e40af; background: #eef4ff; }
+        .balance-filter-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; background: #f0f4fa; padding: 12px 16px; border-radius: 40px; }
+        .balance-filter-bar label { font-size: 0.85rem; font-weight: 500; color: #4a5a72; white-space: nowrap; }
+        .balance-filter-select { flex: 1; min-width: 160px; padding: 10px 14px; border-radius: 30px; border: 1.5px solid #dbe2eb; background: white; font-size: 0.9rem; font-weight: 500; color: #1a2639; cursor: pointer; }
+        .balance-filter-select:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+        .balance-summary-person { font-size: 0.85rem; color: #6b7b94; background: #ffffff; padding: 8px 16px; border-radius: 30px; border: 1px solid #e2e8f0; }
+        .balance-summary-person strong { color: #1e40af; font-weight: 700; }
+        .empty-person-hint { color: #b45309; background: #fffbeb; border: 1px solid #fde68a; border-radius: 16px; padding: 20px; text-align: center; font-size: 0.95rem; }
+        .hidden-copyright { text-align: center; font-size: 10px; color: #e0e4ea; margin-top: 24px; user-select: none; }
+    </style>
+</head>
+<body>
+
+    <div id="authOverlay">
+        <div class="auth-box">
+            <h2>🔒 访问受限</h2>
+            <p>本工具仅供授权个人使用，请输入访问口令。</p>
+            <input type="password" id="authPassword" placeholder="请输入访问口令" autocomplete="off">
+            <div class="auth-error" id="authError"></div>
+            <button onclick="checkAuth()">进入系统</button>
+            <div style="margin-top:20px; font-size:0.75rem; color:#a0aec0;">© 2026 高鹤鸣</div>
+        </div>
+    </div>
+
+    <div class="app" id="mainApp">
+        <h1>🚀 出差调休 · 连续记录</h1>
+        <div class="subhead">支持连续日期勾选 · 导出按人筛选 · 调休收支按人查看</div>
+
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="record">📝 记录工作</button>
+            <button class="tab-btn" data-tab="calendar">📅 日历标签</button>
+            <button class="tab-btn" data-tab="balance">⚖️ 调休收支</button>
+            <button class="tab-btn" data-tab="personnel">👥 人员管理</button>
+            <button class="tab-btn" data-tab="export">📤 数据导出</button>
+            <button class="tab-btn" data-tab="import">📥 数据导入</button>
+            <button class="tab-btn" data-tab="settings">⚙️ 设置</button>
+        </div>
+
+        <!-- 记录工作 -->
+        <div id="tab-record" class="tab-pane active">
+            <div class="card">
+                <div class="card-title">➕ 新增记录</div>
+                <div class="field-row">
+                    <label>人员</label>
+                    <select id="recordPerson"><option value="">-- 选择人员 --</option></select>
+                </div>
+
+                <div class="date-range-picker">
+                    <div class="field-row"><label>开始日期</label><input type="date" id="rangeStart"></div>
+                    <div class="field-row"><label>结束日期</label><input type="date" id="rangeEnd"></div>
+                    <div class="range-preview" id="rangePreview">未选择</div>
+                    <button class="btn btn-sm btn-outline" id="applyRangeBtn" style="flex:0 0 auto;">应用连续日期</button>
+                    <button class="btn btn-sm btn-outline" id="clearRangeBtn" style="flex:0 0 auto;">清除连续</button>
+                </div>
+
+                <div class="field-row">
+                    <label>日期（可连续勾选多个）</label>
+                    <div id="dateCheckboxList" style="display:flex;flex-wrap:wrap;gap:8px;background:#f9fcff;padding:14px;border-radius:16px;border:1px solid #e7edf5;min-height:52px;">
+                        <span style="color:#8b9bb5;font-size:0.9rem;">请先选择连续日期或直接勾选</span>
+                    </div>
+                </div>
+
+                <div class="field-row">
+                    <label>工作内容（应用于所有勾选日期）</label>
+                    <textarea id="recordContent" placeholder="例如：客户现场支持、赶路回程……"></textarea>
+                </div>
+                <div class="field-row">
+                    <label>当日状态（应用于所有勾选日期）</label>
+                    <div class="status-group" id="statusGroup">
+                        <div class="status-option" data-status="出差">🚗 出差</div>
+                        <div class="status-option" data-status="在家">🏠 在家</div>
+                        <div class="status-option" data-status="赶路">✈️ 赶路</div>
+                        <div class="status-option" data-status="差休">📌 差休</div>
+                    </div>
+                </div>
+                <button class="btn" id="saveRecordBtn">💾 保存记录</button>
+                <div id="saveHint" style="margin-top: 12px; font-size: 0.9rem; color: #0f6e3f; min-height: 24px;"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">📋 历史记录</div>
+                <div id="recordList" class="record-list"><div class="empty-state">暂无记录，请添加第一条</div></div>
+            </div>
+        </div>
+
+        <!-- 日历 -->
+        <div id="tab-calendar" class="tab-pane">
+            <div class="card">
+                <div class="card-title">📅 本月日历</div>
+                <div class="cal-filter-bar">
+                    <label>👤 查看人员：</label>
+                    <select id="calendarPersonFilter" class="cal-filter-select">
+                        <option value="__all__">全部人员（综合显示）</option>
+                    </select>
+                </div>
+                <div class="calendar-wrapper">
+                    <div class="calendar-header">
+                        <button class="icon-btn" id="prevMonth">◀</button>
+                        <span id="monthLabel" style="font-weight:600;color:#1a2639;"></span>
+                        <button class="icon-btn" id="nextMonth">▶</button>
+                    </div>
+                    <div class="calendar-grid" id="calendarGrid"></div>
+                </div>
+                <div class="cal-legend">
+                    <span><span style="display:inline-block;width:12px;height:12px;background:#fff8f0;border:1px solid #ffe0c0;border-radius:4px;"></span>周末</span>
+                    <span><span style="display:inline-block;width:12px;height:12px;background:#eef4ff;border:1px solid #3b82f6;border-radius:4px;"></span>有记录</span>
+                    <span><span style="display:inline-block;width:8px;height:8px;background:#f59e0b;border-radius:10px;"></span>产生调休</span>
+                </div>
+                <div class="small-note" style="margin-top:8px;">💡 选择「全部人员」时，如果某天有多人记录，日期格子右上角会显示记录人数。</div>
+            </div>
+        </div>
+
+        <!-- 调休收支 -->
+        <div id="tab-balance" class="tab-pane">
+            <div class="card">
+                <div class="card-title">👤 选择人员查看调休收支</div>
+                <div class="balance-filter-bar">
+                    <label>查看人员：</label>
+                    <select id="balancePersonFilter" class="balance-filter-select">
+                        <option value="__all__">全部人员（汇总）</option>
+                    </select>
+                    <div class="balance-summary-person" id="balanceSummaryPerson" style="display:none;">
+                        当前：<strong id="balancePersonName"></strong>
+                    </div>
+                </div>
+                <div class="summary-grid" id="balanceSummaryGrid">
+                    <div class="summary-card">
+                        <div class="summary-value" id="activeBalanceDays">0</div>
+                        <div class="summary-label">当前有效调休(天)</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-value" id="expiring30Days">0</div>
+                        <div class="summary-label">近30天过期(天)</div>
+                    </div>
+                </div>
+                <div class="card-title" style="margin-top:8px;">📊 调休明细</div>
+                <div id="balanceList" class="balance-list"><div class="empty-state">暂无调休产生</div></div>
+            </div>
+        </div>
+
+        <!-- 人员管理 -->
+        <div id="tab-personnel" class="tab-pane">
+            <div class="card">
+                <div class="card-title">👤 人员列表</div>
+                <div class="person-manager">
+                    <input type="text" id="newPersonName" placeholder="输入人员姓名">
+                    <button class="btn btn-sm" id="addPersonBtn">➕ 添加人员</button>
+                </div>
+                <div id="personListContainer" class="person-list">
+                    <div class="empty-state" style="padding:16px;">暂无人员，请添加</div>
+                </div>
+            </div>
+
+            <div class="card batch-card">
+                <div class="card-title">📋 批量记录（今天）</div>
+                <div class="flex-between" style="margin-bottom: 12px;">
+                    <div class="flex-inline">
+                        <label style="font-size:0.85rem;color:#5e6f8d;">日期</label>
+                        <input type="date" id="batchDate" style="width:auto;padding:8px 12px;">
+                    </div>
+                    <button class="btn btn-sm btn-outline" id="batchAddAllBtn">✅ 为所有人员添加记录</button>
+                </div>
+                <table class="batch-table" id="batchTable">
+                    <thead><tr><th>人员</th><th>状态</th><th>工作内容</th></tr></thead>
+                    <tbody id="batchTableBody"></tbody>
+                </table>
+                <div class="batch-actions">
+                    <button class="btn btn-sm" id="batchSaveBtn">💾 批量保存记录</button>
+                    <span id="batchHint" style="font-size:0.85rem;color:#0f6e3f;"></span>
+                </div>
+                <div class="small-note">提示：状态默认「出差」，可逐行修改；工作内容可填写，留空则默认为“出差”。</div>
+            </div>
+        </div>
+
+        <!-- 数据导出 -->
+        <div id="tab-export" class="tab-pane">
+            <div class="backup-card">
+                <div class="backup-title">💾 一键备份（全部数据）</div>
+                <div style="font-size:0.9rem;color:#166534;margin-bottom:12px;">将当前所有记录、人员、设置打包为一个 JSON 文件。换设备或清空浏览器后，可通过“数据导入”恢复。</div>
+                <div class="backup-actions">
+                    <button class="btn btn-sm" id="backupAllBtn" style="background:#16a34a;box-shadow:0 4px 12px rgba(22,163,74,0.3);">📦 导出全部数据备份</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">📤 选择导出内容</div>
+                <div class="export-options">
+                    <label class="export-option"><input type="checkbox" id="exportRecords" checked><span class="export-option-label">工作记录<span class="export-option-desc">包含日期、人员、状态、工作内容、调休天数</span></span></label>
+                    <label class="export-option"><input type="checkbox" id="exportBalance" checked><span class="export-option-label">调休收支明细<span class="export-option-desc">每条调休的产生日期、到期日、剩余天数、状态</span></span></label>
+                    <label class="export-option"><input type="checkbox" id="exportSummary" checked><span class="export-option-label">调休汇总<span class="export-option-desc">当前有效调休总天数、近30天过期天数</span></span></label>
+                    <label class="export-option"><input type="checkbox" id="exportPersons" checked><span class="export-option-label">人员名单<span class="export-option-desc">当前人员列表</span></span></label>
+                    <label class="export-option"><input type="checkbox" id="exportSettings" checked><span class="export-option-label">规则设置<span class="export-option-desc">赶路/出差周末调休天数、有效期天数</span></span></label>
+                </div>
+
+                <div style="margin-bottom: 12px; font-weight: 600; color: #1a2639;">选择导出人员（不选则导出全部）</div>
+                <div class="person-quick-select" id="exportPersonQuickSelect">
+                    <button type="button" data-action="all">全选</button>
+                    <button type="button" data-action="none">全不选</button>
+                    <button type="button" data-action="invert">反选</button>
+                </div>
+                <div class="person-checkbox-grid" id="exportPersonCheckboxGrid"><span style="color:#8b9bb5;font-size:0.9rem;">暂无人员</span></div>
+
+                <div style="margin-bottom: 12px; font-weight: 600; color: #1a2639;">选择导出格式</div>
+                <div class="export-format" id="exportFormatGroup">
+                    <div class="format-btn active" data-format="csv">📄 CSV 工作表</div>
+                    <div class="format-btn" data-format="json">🗂️ JSON 数据</div>
+                </div>
+
+                <div class="export-preview" id="exportPreview"><strong>预览：</strong>将导出 5 个数据表。</div>
+                <button class="btn" id="exportBtn">⬇️ 导出文件</button>
+                <div id="exportHint" style="margin-top: 12px; font-size: 0.9rem; color: #0f6e3f; min-height: 24px;"></div>
+            </div>
+        </div>
+
+        <!-- 数据导入 -->
+        <div id="tab-import" class="tab-pane">
+            <div class="card">
+                <div class="card-title">📥 导入备份文件</div>
+                <div style="font-size:0.9rem;color:#4f5f74;margin-bottom:16px;">选择之前导出的 JSON 备份文件，即可恢复全部历史记录、人员与设置。<strong style="color:#b45309;">导入前请确认当前数据已备份</strong>，导入将覆盖现有数据。</div>
+                <div class="import-area" id="importArea">
+                    <input type="file" id="importFileInput" accept=".json,application/json">
+                    <div class="import-icon">📂</div>
+                    <div class="import-text">点击选择文件 或 拖拽 JSON 文件到此处</div>
+                    <div class="import-sub">仅支持由本页面导出的 JSON 备份文件</div>
+                </div>
+                <div id="importPreviewArea" style="display:none;">
+                    <div class="export-preview" id="importPreview"><strong>文件预览：</strong><span id="importPreviewText"></span></div>
+                    <div class="flex-between">
+                        <button class="btn btn-outline btn-sm" id="cancelImportBtn">取消</button>
+                        <button class="btn btn-sm" id="confirmImportBtn" style="background:#16a34a;">✅ 确认导入并覆盖</button>
+                    </div>
+                </div>
+                <div id="importHint" style="margin-top: 16px; font-size: 0.9rem; color: #0f6e3f; min-height: 24px;"></div>
+            </div>
+
+            <div class="card danger-zone">
+                <div class="card-title danger-title">⚠️ 危险操作</div>
+                <div style="font-size:0.9rem;color:#b91c1c;margin-bottom:12px;">清除当前浏览器中的所有记录、人员和设置。此操作不可撤销，请先导出备份。</div>
+                <button class="btn btn-sm btn-danger" id="clearAllBtn">🗑️ 清除全部本地数据</button>
+            </div>
+        </div>
+
+        <!-- 设置 -->
+        <div id="tab-settings" class="tab-pane">
+            <div class="card">
+                <div class="card-title">⚙️ 规则设置</div>
+                <div class="settings-row">
+                    <div><div class="settings-label">赶路占用周末</div><div class="settings-hint">默认生成1天调休，可调整为0.5天</div></div>
+                    <div class="toggle-switch" id="travelToggle"><div class="toggle-option active" data-travel="1">1天</div><div class="toggle-option" data-travel="0.5">0.5天</div></div>
+                </div>
+                <div class="settings-row">
+                    <div><div class="settings-label">出差遇到单休（周六/周日）</div><div class="settings-hint">默认生成1天调休，可调整为0.5天（差休标签）</div></div>
+                    <div class="toggle-switch" id="businessToggle"><div class="toggle-option active" data-business="1">1天</div><div class="toggle-option" data-business="0.5">0.5天</div></div>
+                </div>
+                <div class="settings-row">
+                    <div><div class="settings-label">有效期（天）</div><div class="settings-hint">每条调休自记录日起单独计算</div></div>
+                    <div class="flex-inline"><input type="number" id="expiryDaysInput" class="input-small" value="180" min="1" step="1"><span style="color:#5e6f8d;font-size:0.9rem;">天</span></div>
+                </div>
+                <div style="margin-top: 20px; font-size: 0.85rem; color: #6b7b94; background: #f0f4ff; padding: 12px 16px; border-radius: 16px;">💡 差休标签：手动标记为“差休”时，若日期为周末且设置中出差单休=0.5天，则生成0.5天调休。<br>仅当状态为「出差」或「赶路」或「差休」且日期为周六/周日时产生调休（差休按周末规则处理）。</div>
+            </div>
+        </div>
+        
+        <div class="hidden-copyright">© 2026 高鹤鸣 · 仅限个人使用</div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // ================= 访问验证逻辑 =================
+        // 你的专属密码（已修改为你提供的新密码）
+        const ACCESS_PASSWORD = 'heming1235789'; 
+        const AUTH_KEY = '__auth_granted_time';
+        const AUTH_VALID_DAYS = 30;
+
+        function checkAuth() {
+            const input = document.getElementById('authPassword').value;
+            const errorEl = document.getElementById('authError');
+            
+            if (input === ACCESS_PASSWORD) {
+                localStorage.setItem(AUTH_KEY, Date.now().toString());
+                document.getElementById('authOverlay').style.display = 'none';
+                document.getElementById('mainApp').classList.add('show');
+                if (typeof initApp === 'function') initApp();
+            } else {
+                errorEl.textContent = '口令错误，请重试。';
+                input.value = '';
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const authTime = localStorage.getItem(AUTH_KEY);
+            let isGranted = false;
+            if (authTime) {
+                const daysPassed = (Date.now() - parseInt(authTime, 10)) / (1000 * 60 * 60 * 24);
+                if (daysPassed < AUTH_VALID_DAYS) isGranted = true;
+            }
+            if (isGranted) {
+                document.getElementById('authOverlay').style.display = 'none';
+                document.getElementById('mainApp').classList.add('show');
+                if (typeof initApp === 'function') initApp();
+            } else {
+                setTimeout(() => document.getElementById('authPassword').focus(), 100);
+            }
+        });
+
+        document.getElementById('authPassword').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') checkAuth();
+        });
+
+        console.log('%c© 2026 高鹤鸣 | 1277161210@qq.com\n本工具仅供个人使用，未经许可禁止商用传播。', 'color:#888;font-size:12px;font-family:sans-serif;');
+    </script>
+
+    <!-- 主应用逻辑 -->
+    <script>
+        let appInitialized = false;
+
+        function initApp() {
+            if (appInitialized) return;
+            appInitialized = true;
+
+            const STORAGE_KEY = 'overtime_leave_records_v6';
+            const SETTINGS_KEY = 'overtime_leave_settings_v6';
+            const PERSON_KEY = 'overtime_leave_persons_v6';
+
+            let settings = { travelWeekendDays: 1, businessWeekendDays: 1, expiryDays: 180 };
+            let records = [];
+            let persons = [];
+
+            function loadFromStorage() {
+                try {
+                    let storedRecords = localStorage.getItem(STORAGE_KEY);
+                    let storedSettings = localStorage.getItem(SETTINGS_KEY);
+                    let storedPersons = localStorage.getItem(PERSON_KEY);
+
+                    if (storedRecords) { records = JSON.parse(storedRecords); if (!Array.isArray(records)) records = []; }
+                    if (storedSettings) { settings = { ...settings, ...JSON.parse(storedSettings) }; }
+                    if (storedPersons) { persons = JSON.parse(storedPersons); if (!Array.isArray(persons)) persons = []; }
+                } catch (e) { console.warn('读取存储失败', e); records = []; persons = []; }
+            }
+
+            function saveRecords() { localStorage.setItem(STORAGE_KEY, JSON.stringify(records)); }
+            function saveSettings() { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
+            function savePersons() { localStorage.setItem(PERSON_KEY, JSON.stringify(persons)); }
+
+            function isWeekend(dateStr) {
+                const d = new Date(dateStr + 'T00:00:00');
+                return d.getDay() === 0 || d.getDay() === 6;
+            }
+
+            function calcLeaveDays(dateStr, status) {
+                if (!dateStr || !isWeekend(dateStr)) return 0;
+                if (status === '出差') return settings.businessWeekendDays;
+                if (status === '赶路') return settings.travelWeekendDays;
+                if (status === '差休') return settings.businessWeekendDays;
+                return 0;
+            }
+
+            function addDays(dateStr, days) {
+                const d = new Date(dateStr + 'T00:00:00');
+                d.setDate(d.getDate() + days);
+                return d.toISOString().slice(0, 10);
+            }
+
+            function daysRemaining(expiryDateStr) {
+                const today = new Date(); today.setHours(0, 0, 0, 0);
+                return Math.ceil((new Date(expiryDateStr + 'T00:00:00') - today) / (1000 * 60 * 60 * 24));
+            }
+
+            function formatDate(dateStr) {
+                if (!dateStr) return '';
+                const [y, m, d] = dateStr.split('-');
+                return `${y}年${m}月${d}日`;
+            }
+
+            function showToast(msg) {
+                const toast = document.getElementById('toast');
+                toast.textContent = msg; toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 2500);
+            }
+
+            function escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div'); div.textContent = text; return div.innerHTML;
+            }
+
+            function getDatesBetween(startStr, endStr) {
+                const dates = [];
+                if (!startStr || !endStr) return dates;
+                let start = new Date(startStr + 'T00:00:00');
+                let end = new Date(endStr + 'T00:00:00');
+                if (start > end) { const t = start; start = end; end = t; }
+                const current = new Date(start);
+                while (current <= end) {
+                    dates.push(current.toISOString().slice(0, 10));
+                    current.setDate(current.getDate() + 1);
+                }
+                return dates;
+            }
+
+            // 渲染人员
+            function renderPersons() {
+                const container = document.getElementById('personListContainer');
+                if (persons.length === 0) {
+                    container.innerHTML = '<div class="empty-state" style="padding:16px;">暂无人员，请添加</div>';
+                } else {
+                    container.innerHTML = persons.map(name => `
+                        <div class="person-chip" data-name="${escapeHtml(name)}">
+                            ${escapeHtml(name)}
+                            <span class="remove-person" data-name="${escapeHtml(name)}" title="删除">✕</span>
+                        </div>
+                    `).join('');
+                    container.querySelectorAll('.remove-person').forEach(el => {
+                        el.addEventListener('click', (e) => removePerson(e.currentTarget.dataset.name));
+                    });
+                }
+                updatePersonSelects();
+                renderBatchTable();
+                updateCalendarFilterOptions();
+                updateBalanceFilterOptions();
+                renderExportPersonCheckboxes();
+            }
+
+            function updatePersonSelects() {
+                const select = document.getElementById('recordPerson');
+                const currentVal = select.value;
+                select.innerHTML = '<option value="">-- 选择人员 --</option>' + persons.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('');
+                if (persons.includes(currentVal)) select.value = currentVal;
+                else select.value = persons.length > 0 ? persons[0] : '';
+            }
+
+            function updateCalendarFilterOptions() {
+                const filter = document.getElementById('calendarPersonFilter');
+                const currentVal = filter.value;
+                filter.innerHTML = '<option value="__all__">全部人员（综合显示）</option>' + persons.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('');
+                if (persons.includes(currentVal) || currentVal === '__all__') filter.value = currentVal;
+                else filter.value = '__all__';
+            }
+
+            function updateBalanceFilterOptions() {
+                const filter = document.getElementById('balancePersonFilter');
+                const currentVal = filter.value;
+                filter.innerHTML = '<option value="__all__">全部人员（汇总）</option>' + persons.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('');
+                if (persons.includes(currentVal) || currentVal === '__all__') filter.value = currentVal;
+                else filter.value = '__all__';
+            }
+
+            function addPerson() {
+                const input = document.getElementById('newPersonName');
+                const name = input.value.trim();
+                if (!name) { alert('请输入人员姓名'); return; }
+                if (persons.includes(name)) { alert('人员已存在'); return; }
+                persons.push(name); savePersons(); input.value = ''; renderPersons();
+                showToast(`已添加人员：${name}`);
+            }
+
+            function removePerson(name) {
+                if (!confirm(`确定删除人员「${name}」吗？该人员的记录不会被删除。`)) return;
+                persons = persons.filter(p => p !== name); savePersons(); renderPersons();
+                if (document.getElementById('calendarPersonFilter').value === name) document.getElementById('calendarPersonFilter').value = '__all__';
+                if (document.getElementById('balancePersonFilter').value === name) document.getElementById('balancePersonFilter').value = '__all__';
+                renderCalendar(); renderBalance(); showToast(`已删除人员：${name}`);
+            }
+
+            function renderBatchTable() {
+                const tbody = document.getElementById('batchTableBody');
+                if (persons.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:#8b9bb5;padding:20px;">请先添加人员</td></tr>`;
+                    return;
+                }
+                tbody.innerHTML = persons.map(name => `
+                    <tr data-person="${escapeHtml(name)}">
+                        <td style="font-weight:500;">${escapeHtml(name)}</td>
+                        <td>
+                            <select class="batch-select batch-status" data-person="${escapeHtml(name)}">
+                                <option value="出差" selected>出差</option>
+                                <option value="在家">在家</option>
+                                <option value="赶路">赶路</option>
+                                <option value="差休">差休</option>
+                            </select>
+                        </td>
+                        <td><input type="text" class="batch-input batch-content" placeholder="工作内容" data-person="${escapeHtml(name)}"></td>
+                    </tr>
+                `).join('');
+            }
+
+            function renderRecords() {
+                const container = document.getElementById('recordList');
+                if (records.length === 0) { container.innerHTML = '<div class="empty-state">暂无记录，请添加第一条</div>'; return; }
+                const sorted = [...records].sort((a, b) => b.date.localeCompare(a.date));
+                container.innerHTML = sorted.map((rec) => {
+                    const leaveDays = calcLeaveDays(rec.date, rec.status);
+                    const weekend = isWeekend(rec.date);
+                    let statusTag = '';
+                    if (rec.status === '出差') statusTag = '<span class="tag">出差</span>';
+                    else if (rec.status === '在家') statusTag = '<span class="tag" style="background:#e2e8f0;color:#4a5a72;">在家</span>';
+                    else if (rec.status === '赶路') statusTag = '<span class="tag tag-orange">赶路</span>';
+                    else if (rec.status === '差休') statusTag = '<span class="tag tag-purple">差休</span>';
+                    const weekendFlag = weekend ? ' · 周末' : '';
+                    const leaveFlag = leaveDays > 0 ? ` · +${leaveDays}天调休` : '';
+                    const personTag = rec.person ? `<span class="tag tag-green" style="margin-left:4px;">${escapeHtml(rec.person)}</span>` : '';
+                    return `
+                    <div class="record-item" data-id="${rec.id}">
+                        <div class="record-info">
+                            <div class="record-date">${formatDate(rec.date)} ${personTag} ${statusTag}<span style="font-size:0.75rem;color:#6b7b94;">${weekendFlag}${leaveFlag}</span></div>
+                            <div class="record-desc">${escapeHtml(rec.content) || '无内容'}</div>
+                        </div>
+                        <div class="record-actions">
+                            <button class="icon-btn edit-btn" data-id="${rec.id}" title="编辑">✏️</button>
+                            <button class="icon-btn delete-btn" data-id="${rec.id}" title="删除">🗑️</button>
+                        </div>
+                    </div>`;
+                }).join('');
+                container.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', (e) => editRecord(e.currentTarget.dataset.id)));
+                container.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', (e) => deleteRecord(e.currentTarget.dataset.id)));
+            }
+
+            function renderBalance() {
+                const filterVal = document.getElementById('balancePersonFilter').value;
+                const showAll = (filterVal === '__all__');
+                const summaryPerson = document.getElementById('balanceSummaryPerson');
+                if (showAll) summaryPerson.style.display = 'none';
+                else { summaryPerson.style.display = 'block'; document.getElementById('balancePersonName').textContent = filterVal; }
+
+                const filteredRecords = showAll ? records : records.filter(r => r.person === filterVal);
+                let totalActive = 0, expiring30 = 0;
+                const leaveItems = [];
+
+                filteredRecords.forEach(rec => {
+                    const days = calcLeaveDays(rec.date, rec.status);
+                    if (days <= 0) return;
+                    const expiryDate = addDays(rec.date, settings.expiryDays);
+                    const remaining = daysRemaining(expiryDate);
+                    const expired = remaining < 0;
+                    if (!expired) totalActive += days;
+                    if (!expired && remaining >= 0 && remaining <= 30) expiring30 += days;
+                    leaveItems.push({ ...rec, days, expiryDate, remaining, expired });
+                });
+
+                document.getElementById('activeBalanceDays').textContent = totalActive.toFixed(1).replace(/\.0$/, '');
+                document.getElementById('expiring30Days').textContent = expiring30.toFixed(1).replace(/\.0$/, '');
+
+                const container = document.getElementById('balanceList');
+                if (leaveItems.length === 0) { container.innerHTML = '<div class="empty-state">暂无调休产生</div>'; return; }
+                leaveItems.sort((a, b) => a.expiryDate.localeCompare(b.expiryDate));
+
+                container.innerHTML = leaveItems.map(item => {
+                    const expiredClass = item.expired ? 'tag-red' : (item.remaining <= 30 ? 'tag-orange' : 'tag-green');
+                    const statusText = item.expired ? '已失效' : `剩余 ${item.remaining} 天`;
+                    const personTag = item.person ? `<span class="tag tag-green" style="margin-left:4px;">${escapeHtml(item.person)}</span>` : '';
+                    return `
+                    <div class="balance-item">
+                        <div class="balance-info">
+                            <div style="font-weight:600;color:#1a2639;">${formatDate(item.date)} ${personTag} · ${item.status} <span class="tag ${expiredClass}" style="margin-left:6px;">${statusText}</span></div>
+                            <div style="font-size:0.85rem;color:#4f5f74;margin-top:4px;">产生 ${item.days} 天 · 到期日 ${formatDate(item.expiryDate)}</div>
+                        </div>
+                        <div style="font-weight:700;color:${item.expired ? '#b91c1c' : '#1e40af'};font-size:1.2rem;">${item.days}天</div>
+                    </div>`;
+                }).join('');
+            }
+
+            let currentMonthDate = new Date();
+            function renderCalendar() {
+                const filterVal = document.getElementById('calendarPersonFilter').value;
+                const showAll = (filterVal === '__all__');
+                const filteredRecords = showAll ? records : records.filter(r => r.person === filterVal);
+                const recordsByDate = new Map();
+                filteredRecords.forEach(r => { if (!recordsByDate.has(r.date)) recordsByDate.set(r.date, []); recordsByDate.get(r.date).push(r); });
+                const year = currentMonthDate.getFullYear(), month = currentMonthDate.getMonth();
+                const firstDay = new Date(year, month, 1), lastDay = new Date(year, month + 1, 0);
+                const startWeekday = firstDay.getDay(), daysInMonth = lastDay.getDate();
+                let html = '';
+                const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+                weekdays.forEach(w => { html += `<div class="cal-day-label">${w}</div>`; });
+                for (let i = 0; i < startWeekday; i++) html += `<div class="cal-day" style="opacity:0.3;background:#f8fafd;border-color:#f0f4fa;"></div>`;
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const dateStr = `${year}-${String(month+1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                    const weekend = (new Date(year, month, d).getDay() === 0 || new Date(year, month, d).getDay() === 6);
+                    const dayRecords = recordsByDate.get(dateStr) || [];
+                    const hasRecord = dayRecords.length > 0;
+                    let hasLeave = false, totalLeave = 0;
+                    dayRecords.forEach(r => { const ld = calcLeaveDays(r.date, r.status); if (ld > 0) { hasLeave = true; totalLeave += ld; } });
+                    let classes = 'cal-day';
+                    if (weekend) classes += ' weekend';
+                    if (hasRecord) classes += ' has-record';
+                    if (hasLeave) classes += ' ot-dot';
+                    let title = '无记录';
+                    if (hasRecord) {
+                        const names = [...new Set(dayRecords.map(r => r.person || '未署名'))].join('、');
+                        const statuses = [...new Set(dayRecords.map(r => r.status))].join('/');
+                        title = `${names} · ${statuses}${hasLeave ? ` · 调休+${totalLeave}` : ''}`;
+                    }
+                    html += `<div class="${classes}" title="${escapeHtml(title)}"><span>${d}</span>`;
+                    if (hasRecord) {
+                        if (!showAll && dayRecords.length === 1) html += `<span class="dot" style="background:${hasLeave ? '#f59e0b' : '#3b82f6'};"></span>`;
+                        else if (showAll) {
+                            if (dayRecords.length > 1) html += `<span class="cal-multi-badge">${dayRecords.length}</span>`;
+                            else html += `<span class="dot" style="background:${hasLeave ? '#f59e0b' : '#3b82f6'};"></span>`;
+                        }
+                    }
+                    html += `</div>`;
+                }
+                document.getElementById('calendarGrid').innerHTML = html;
+                document.getElementById('monthLabel').textContent = `${year}年 ${month+1}月`;
+            }
+
+            function refreshAll() { renderRecords(); renderBalance(); renderCalendar(); renderPersons(); }
+
+            let selectedDates = new Set();
+            function renderDateCheckboxes() {
+                const container = document.getElementById('dateCheckboxList');
+                let dateList = [];
+                const startVal = document.getElementById('rangeStart').value;
+                const endVal = document.getElementById('rangeEnd').value;
+                if (startVal && endVal) dateList = getDatesBetween(startVal, endVal);
+                else {
+                    const today = new Date();
+                    for (let i = -7; i <= 7; i++) { const d = new Date(today); d.setDate(d.getDate() + i); dateList.push(d.toISOString().slice(0, 10)); }
+                    dateList.sort();
+                }
+                if (dateList.length === 0) { container.innerHTML = '<span style="color:#8b9bb5;font-size:0.9rem;">请先选择连续日期或直接勾选</span>'; return; }
+                container.innerHTML = dateList.map(dateStr => {
+                    const checked = selectedDates.has(dateStr);
+                    const isWeekendDay = isWeekend(dateStr);
+                    return `<label style="display:flex;align-items:center;gap:6px;background:${checked?'#dbeafe':'#ffffff'};padding:6px 12px;border-radius:30px;border:1px solid ${checked?'#3b82f6':'#e2e8f0'};font-size:0.85rem;cursor:pointer;transition:0.1s;${isWeekendDay?'color:#b45309;':''}">
+                        <input type="checkbox" class="date-checkbox" value="${dateStr}" ${checked?'checked':''} style="width:16px;height:16px;accent-color:#3b82f6;margin:0;">
+                        ${dateStr.slice(5)} ${isWeekendDay?'周末':''}
+                    </label>`;
+                }).join('');
+                container.querySelectorAll('.date-checkbox').forEach(cb => {
+                    cb.addEventListener('change', (e) => {
+                        if (e.target.checked) selectedDates.add(e.target.value); else selectedDates.delete(e.target.value);
+                        const label = e.target.closest('label');
+                        if (e.target.checked) { label.style.background = '#dbeafe'; label.style.borderColor = '#3b82f6'; }
+                        else { label.style.background = '#ffffff'; label.style.borderColor = '#e2e8f0'; }
+                        updateRangePreview();
+                    });
+                });
+                updateRangePreview();
+            }
+
+            function updateRangePreview() {
+                const preview = document.getElementById('rangePreview');
+                if (selectedDates.size === 0) preview.textContent = '未选择';
+                else preview.textContent = `已选 ${[...selectedDates].length} 天`;
+            }
+
+            function setupDateRange() {
+                const startInput = document.getElementById('rangeStart'), endInput = document.getElementById('rangeEnd');
+                const today = new Date().toISOString().slice(0, 10);
+                startInput.value = today; endInput.value = today;
+                document.getElementById('applyRangeBtn').addEventListener('click', () => {
+                    const start = startInput.value, end = endInput.value;
+                    if (!start || !end) { alert('请选择开始和结束日期'); return; }
+                    selectedDates.clear();
+                    getDatesBetween(start, end).forEach(d => selectedDates.add(d));
+                    renderDateCheckboxes();
+                    showToast(`已选择连续 ${selectedDates.size} 天`);
+                });
+                document.getElementById('clearRangeBtn').addEventListener('click', () => { selectedDates.clear(); renderDateCheckboxes(); showToast('已清除连续选择'); });
+                renderDateCheckboxes();
+            }
+
+            let editingId = null;
+            function resetForm() {
+                selectedDates.clear(); renderDateCheckboxes();
+                document.getElementById('recordContent').value = '';
+                const select = document.getElementById('recordPerson');
+                if (persons.length > 0 && !select.value) select.value = persons[0];
+                document.querySelectorAll('#statusGroup .status-option').forEach(el => el.classList.remove('selected'));
+                document.querySelector('#statusGroup .status-option[data-status="出差"]').classList.add('selected');
+                document.getElementById('saveHint').textContent = '';
+                editingId = null;
+                document.getElementById('saveRecordBtn').textContent = '💾 保存记录';
+            }
+
+            function editRecord(id) {
+                const rec = records.find(r => r.id === id); if (!rec) return;
+                editingId = id;
+                document.getElementById('recordContent').value = rec.content || '';
+                const select = document.getElementById('recordPerson');
+                if (rec.person && persons.includes(rec.person)) select.value = rec.person; else select.value = '';
+                document.querySelectorAll('#statusGroup .status-option').forEach(el => el.classList.toggle('selected', el.dataset.status === rec.status));
+                selectedDates.clear(); selectedDates.add(rec.date);
+                document.getElementById('rangeStart').value = rec.date; document.getElementById('rangeEnd').value = rec.date;
+                renderDateCheckboxes();
+                document.getElementById('saveRecordBtn').textContent = '✏️ 更新记录';
+                document.querySelector('#tab-record .card').scrollIntoView({ behavior: 'smooth' });
+                switchTab('record');
+            }
+
+            function deleteRecord(id) {
+                if (!confirm('确定删除这条记录吗？对应的调休也会移除。')) return;
+                records = records.filter(r => r.id !== id); saveRecords(); refreshAll();
+                if (editingId === id) resetForm(); showToast('已删除');
+            }
+
+            function saveRecord() {
+                const person = document.getElementById('recordPerson').value;
+                const content = document.getElementById('recordContent').value.trim();
+                const selectedStatus = document.querySelector('#statusGroup .status-option.selected');
+                if (!person) { alert('请选择人员'); return; }
+                if (!selectedStatus) { alert('请选择当日状态'); return; }
+                const status = selectedStatus.dataset.status;
+                const datesToSave = [...selectedDates];
+                if (datesToSave.length === 0) { alert('请至少勾选一个日期'); return; }
+                let totalLeaveDays = 0, addedCount = 0, updatedCount = 0;
+
+                if (editingId && datesToSave.length === 1) {
+                    const index = records.findIndex(r => r.id === editingId);
+                    if (index !== -1) {
+                        const date = datesToSave[0];
+                        records[index] = { ...records[index], date, content, status, person };
+                        totalLeaveDays = calcLeaveDays(date, status);
+                        saveRecords(); refreshAll();
+                        let hint = `✅ 已更新记录，${person} 本次产生 ${totalLeaveDays} 天调休`;
+                        document.getElementById('saveHint').textContent = hint;
+                        resetForm(); document.getElementById('saveHint').textContent = hint; showToast(hint);
+                        return;
+                    }
+                }
+
+                datesToSave.forEach(dateStr => {
+                    const leaveDays = calcLeaveDays(dateStr, status);
+                    totalLeaveDays += leaveDays;
+                    const existingIndex = records.findIndex(r => r.person === person && r.date === dateStr);
+                    if (existingIndex !== -1) {
+                        records[existingIndex] = { ...records[existingIndex], status, content, person }; updatedCount++;
+                    } else {
+                        records.push({ id: Date.now() + '-' + Math.random().toString(36).substr(2, 8) + '-' + addedCount, date: dateStr, content: content || (status === '出差' ? '出差' : status), status, person, createdAt: new Date().toISOString() });
+                        addedCount++;
+                    }
+                });
+                saveRecords(); refreshAll();
+                const hint = `✅ 保存成功！${person} 新增/更新 ${datesToSave.length} 天记录，合计产生 ${totalLeaveDays.toFixed(1).replace(/\.0$/, '')} 天调休（新增 ${addedCount} 条，更新 ${updatedCount} 条）`;
+                document.getElementById('saveHint').textContent = hint;
+                resetForm(); document.getElementById('saveHint').textContent = hint; showToast(hint);
+                switchTab('record');
+            }
+
+            function batchSave() {
+                const batchDate = document.getElementById('batchDate').value;
+                if (!batchDate) { alert('请选择批量记录日期'); return; }
+                const rows = document.querySelectorAll('#batchTableBody tr');
+                if (rows.length === 0) { alert('没有人员可批量记录'); return; }
+                let addedCount = 0, totalLeaveDays = 0;
+                rows.forEach(row => {
+                    const person = row.dataset.person; if (!person) return;
+                    const statusSelect = row.querySelector('.batch-status'); if (!statusSelect) return;
+                    const status = statusSelect.value;
+                    const content = row.querySelector('.batch-content') ? row.querySelector('.batch-content').value.trim() : '';
+                    const existingIndex = records.findIndex(r => r.person === person && r.date === batchDate);
+                    const leaveDays = calcLeaveDays(batchDate, status);
+                    if (existingIndex !== -1) records[existingIndex] = { ...records[existingIndex], status, content, person };
+                    else records.push({ id: Date.now() + '-' + Math.random().toString(36).substr(2, 8) + '-' + addedCount, date: batchDate, content: content || (status === '出差' ? '出差' : status), status, person, createdAt: new Date().toISOString() });
+                    addedCount++; totalLeaveDays += leaveDays;
+                });
+                saveRecords(); refreshAll();
+                const hint = `✅ 批量保存完成，共处理 ${addedCount} 人，合计产生 ${totalLeaveDays.toFixed(1).replace(/\.0$/, '')} 天调休（日期：${batchDate}）`;
+                document.getElementById('batchHint').textContent = hint; showToast(hint);
+            }
+
+            // ================= 新增/修复的完整导出导入逻辑 =================
+            let exportFormat = 'csv';
+
+            function renderExportPersonCheckboxes() {
+                const grid = document.getElementById('exportPersonCheckboxGrid');
+                if (persons.length === 0) {
+                    grid.innerHTML = '<span style="color:#8b9bb5;font-size:0.9rem;">暂无人员</span>';
+                    return;
+                }
+                grid.innerHTML = persons.map(p => `
+                    <label class="person-checkbox-item checked" data-person="${escapeHtml(p)}">
+                        <input type="checkbox" class="export-person-checkbox" value="${escapeHtml(p)}" checked>
+                        ${escapeHtml(p)}
+                    </label>
+                `).join('');
+
+                grid.querySelectorAll('.export-person-checkbox').forEach(cb => {
+                    cb.addEventListener('change', (e) => {
+                        const label = e.target.closest('.person-checkbox-item');
+                        if (e.target.checked) label.classList.add('checked');
+                        else label.classList.remove('checked');
+                        updateExportPreview();
+                    });
+                });
+
+                document.querySelectorAll('#exportPersonQuickSelect button').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const action = btn.dataset.action;
+                        const checkboxes = grid.querySelectorAll('.export-person-checkbox');
+                        if (action === 'all') checkboxes.forEach(cb => { cb.checked = true; cb.closest('.person-checkbox-item').classList.add('checked'); });
+                        else if (action === 'none') checkboxes.forEach(cb => { cb.checked = false; cb.closest('.person-checkbox-item').classList.remove('checked'); });
+                        else if (action === 'invert') checkboxes.forEach(cb => {
+                            cb.checked = !cb.checked;
+                            if (cb.checked) cb.closest('.person-checkbox-item').classList.add('checked');
+                            else cb.closest('.person-checkbox-item').classList.remove('checked');
+                        });
+                        updateExportPreview();
+                    });
+                });
+            }
+
+            function getSelectedExportPersons() {
+                return [...document.querySelectorAll('.export-person-checkbox:checked')].map(cb => cb.value);
+            }
+
+            function updateExportPreview() {
+                const checks = [
+                    { id: 'exportRecords', label: '工作记录' },
+                    { id: 'exportBalance', label: '调休收支明细' },
+                    { id: 'exportSummary', label: '调休汇总' },
+                    { id: 'exportPersons', label: '人员名单' },
+                    { id: 'exportSettings', label: '规则设置' }
+                ];
+                const selected = checks.filter(c => document.getElementById(c.id).checked).map(c => c.label);
+                const selectedPersons = getSelectedExportPersons();
+                const preview = document.getElementById('exportPreview');
+                if (selected.length === 0) {
+                    preview.innerHTML = `<strong>预览：</strong>请至少选择一项导出内容。`;
+                } else {
+                    let personText = selectedPersons.length === 0 ? '（未选人员，将导出全部人员的数据）' : (selectedPersons.length === persons.length ? '（全部人员）' : `（已选 ${selectedPersons.length} 人）`);
+                    preview.innerHTML = `<strong>预览：</strong>将导出 ${selected.length} 个数据表${personText}，格式为 ${exportFormat === 'csv' ? 'CSV 工作表' : 'JSON 数据'}。`;
+                }
+            }
+
+            function makeCSV(headers, rows) {
+                const escapeCsv = (val) => {
+                    if (val === null || val === undefined) return '';
+                    const str = String(val);
+                    if (str.includes(',') || str.includes('"') || str.includes('\n')) return '"' + str.replace(/"/g, '""') + '"';
+                    return str;
+                };
+                return '\uFEFF' + [headers.map(escapeCsv).join(','), ...rows.map(row => row.map(escapeCsv).join(','))].join('\n');
+            }
+
+            function downloadFile(filename, content, mimeType) {
+                const blob = new Blob([content], { type: mimeType || 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+            }
+
+            function performExport() {
+                const doRecords = document.getElementById('exportRecords').checked;
+                const doBalance = document.getElementById('exportBalance').checked;
+                const doSummary = document.getElementById('exportSummary').checked;
+                const doPersons = document.getElementById('exportPersons').checked;
+                const doSettings = document.getElementById('exportSettings').checked;
+                if (!doRecords && !doBalance && !doSummary && !doPersons && !doSettings) { alert('请至少选择一项导出内容'); return; }
+
+                const selectedPersons = getSelectedExportPersons();
+                const exportAll = selectedPersons.length === 0 || selectedPersons.length === persons.length;
+                let exportRecordsList = records;
+                if (!exportAll && selectedPersons.length > 0) exportRecordsList = records.filter(r => selectedPersons.includes(r.person));
+                let exportPersonsList = persons;
+                if (!exportAll && selectedPersons.length > 0) exportPersonsList = selectedPersons;
+
+                const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+                const hintEl = document.getElementById('exportHint');
+
+                if (exportFormat === 'csv') {
+                    let fileCount = 0;
+                    if (doRecords) {
+                        const headers = ['日期', '人员', '状态', '工作内容', '调休天数', '是否周末'];
+                        const rows = exportRecordsList.map(r => [r.date, r.person || '', r.status, r.content || '', calcLeaveDays(r.date, r.status), isWeekend(r.date) ? '是' : '否']);
+                        downloadFile(`工作记录_${timestamp}.csv`, makeCSV(headers, rows), 'text/csv;charset=utf-8');
+                        fileCount++;
+                    }
+                    if (doBalance) {
+                        const headers = ['记录日期', '人员', '状态', '产生调休天数', '到期日', '剩余天数', '状态'];
+                        const rows = [];
+                        exportRecordsList.forEach(r => {
+                            const days = calcLeaveDays(r.date, r.status);
+                            if (days <= 0) return;
+                            const expiry = addDays(r.date, settings.expiryDays);
+                            const remaining = daysRemaining(expiry);
+                            rows.push([r.date, r.person || '', r.status, days, expiry, remaining, remaining < 0 ? '已失效' : '有效']);
+                        });
+                        rows.sort((a, b) => a[4].localeCompare(b[4]));
+                        downloadFile(`调休收支明细_${timestamp}.csv`, makeCSV(headers, rows), 'text/csv;charset=utf-8');
+                        fileCount++;
+                    }
+                    if (doSummary) {
+                        let totalActive = 0, expiring30 = 0;
+                        exportRecordsList.forEach(r => {
+                            const days = calcLeaveDays(r.date, r.status);
+                            if (days <= 0) return;
+                            const expiry = addDays(r.date, settings.expiryDays);
+                            const remaining = daysRemaining(expiry);
+                            if (remaining >= 0) totalActive += days;
+                            if (remaining >= 0 && remaining <= 30) expiring30 += days;
+                        });
+                        const headers = ['指标', '数值'];
+                        const rows = [['当前有效调休总天数', totalActive.toFixed(1).replace(/\.0$/, '')], ['近30天内过期天数', expiring30.toFixed(1).replace(/\.0$/, '')], ['导出时间', new Date().toLocaleString()]];
+                        downloadFile(`调休汇总_${timestamp}.csv`, makeCSV(headers, rows), 'text/csv;charset=utf-8');
+                        fileCount++;
+                    }
+                    if (doPersons) {
+                        const headers = ['人员姓名'];
+                        const rows = exportPersonsList.map(p => [p]);
+                        downloadFile(`人员名单_${timestamp}.csv`, makeCSV(headers, rows), 'text/csv;charset=utf-8');
+                        fileCount++;
+                    }
+                    if (doSettings) {
+                        const headers = ['设置项', '值'];
+                        const rows = [['赶路占用周末调休天数', settings.travelWeekendDays], ['出差占用周末调休天数', settings.businessWeekendDays], ['调休有效期（天）', settings.expiryDays]];
+                        downloadFile(`规则设置_${timestamp}.csv`, makeCSV(headers, rows), 'text/csv;charset=utf-8');
+                        fileCount++;
+                    }
+                    hintEl.textContent = `✅ 已导出 ${fileCount} 个 CSV 文件，请查看浏览器下载。`;
+                    showToast(`已导出 ${fileCount} 个文件`);
+                } else {
+                    const exportData = { exportTime: new Date().toISOString(), format: 'json', owner: '© 2026 高鹤鸣 - 1277161210@qq.com' };
+                    if (doRecords) exportData.records = exportRecordsList;
+                    if (doBalance) {
+                        exportData.balanceItems = [];
+                        exportRecordsList.forEach(r => {
+                            const days = calcLeaveDays(r.date, r.status);
+                            if (days <= 0) return;
+                            const expiry = addDays(r.date, settings.expiryDays);
+                            const remaining = daysRemaining(expiry);
+                            exportData.balanceItems.push({ date: r.date, person: r.person || '', status: r.status, days, expiryDate: expiry, remainingDays: remaining, expired: remaining < 0 });
+                        });
+                    }
+                    if (doSummary) {
+                        let totalActive = 0, expiring30 = 0;
+                        exportRecordsList.forEach(r => {
+                            const days = calcLeaveDays(r.date, r.status);
+                            if (days <= 0) return;
+                            const expiry = addDays(r.date, settings.expiryDays);
+                            const remaining = daysRemaining(expiry);
+                            if (remaining >= 0) totalActive += days;
+                            if (remaining >= 0 && remaining <= 30) expiring30 += days;
+                        });
+                        exportData.summary = { totalActive, expiring30 };
+                    }
+                    if (doPersons) exportData.persons = exportPersonsList;
+                    if (doSettings) exportData.settings = settings;
+                    downloadFile(`调休数据_${timestamp}.json`, JSON.stringify(exportData, null, 2), 'application/json;charset=utf-8');
+                    hintEl.textContent = `✅ 已导出 JSON 文件。`;
+                    showToast(`已导出 JSON 文件`);
+                }
+            }
+
+            // 导入逻辑
+            let pendingImportData = null;
+            function setupImport() {
+                const importArea = document.getElementById('importArea'), fileInput = document.getElementById('importFileInput');
+                const previewArea = document.getElementById('importPreviewArea'), previewText = document.getElementById('importPreviewText');
+                const cancelBtn = document.getElementById('cancelImportBtn'), confirmBtn = document.getElementById('confirmImportBtn');
+                const hintEl = document.getElementById('importHint');
+
+                function resetImportUI() {
+                    pendingImportData = null; fileInput.value = ''; previewArea.style.display = 'none'; importArea.style.display = 'block'; hintEl.textContent = '';
+                }
+
+                function handleFile(file) {
+                    if (!file) return;
+                    if (!file.name.endsWith('.json') && file.type !== 'application/json') { alert('请选择 JSON 格式的备份文件'); return; }
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const data = JSON.parse(e.target.result);
+                            if (!data || (!data.records && !data.persons && !data.settings)) throw new Error('无效的备份文件');
+                            pendingImportData = data;
+                            const recordCount = Array.isArray(data.records) ? data.records.length : 0;
+                            const personCount = Array.isArray(data.persons) ? data.persons.length : 0;
+                            const exportTime = data.exportTime ? new Date(data.exportTime).toLocaleString() : '未知';
+                            previewText.textContent = `包含 ${recordCount} 条记录、${personCount} 位人员（导出于 ${exportTime}）。`;
+                            previewArea.style.display = 'block'; importArea.style.display = 'none';
+                        } catch (err) { alert('无法解析文件：' + err.message); resetImportUI(); }
+                    };
+                    reader.readAsText(file);
+                }
+
+                importArea.addEventListener('click', () => fileInput.click());
+                fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+                importArea.addEventListener('dragover', (e) => { e.preventDefault(); importArea.classList.add('dragover'); });
+                importArea.addEventListener('dragleave', () => importArea.classList.remove('dragover'));
+                importArea.addEventListener('drop', (e) => { e.preventDefault(); importArea.classList.remove('dragover'); handleFile(e.dataTransfer.files[0]); });
+                cancelBtn.addEventListener('click', resetImportUI);
+
+                confirmBtn.addEventListener('click', () => {
+                    if (!pendingImportData) return;
+                    if (!confirm('导入将覆盖当前所有记录、人员和设置，确定继续吗？')) return;
+                    try {
+                        const data = pendingImportData;
+                        if (Array.isArray(data.records)) {
+                            records = data.records.map(r => ({ ...r, id: r.id || (Date.now() + '-' + Math.random().toString(36).substr(2, 6)) }));
+                        }
+                        if (Array.isArray(data.persons)) persons = data.persons.filter(p => typeof p === 'string');
+                        if (data.settings && typeof data.settings === 'object') settings = { ...settings, ...data.settings };
+                        saveRecords(); savePersons(); saveSettings();
+                        refreshAll(); syncSettingsUI(); resetForm();
+                        hintEl.textContent = `✅ 导入成功！已恢复 ${records.length} 条记录、${persons.length} 位人员。`;
+                        showToast('数据导入成功'); resetImportUI(); switchTab('record');
+                    } catch (err) { alert('导入失败：' + err.message); }
+                });
+            }
+
+            document.getElementById('clearAllBtn').addEventListener('click', () => {
+                if (!confirm('确定清除所有本地数据吗？此操作不可撤销，建议先导出备份。')) return;
+                if (!confirm('再次确认：所有记录、人员和设置都将被删除！')) return;
+                localStorage.removeItem(STORAGE_KEY); localStorage.removeItem(SETTINGS_KEY); localStorage.removeItem(PERSON_KEY);
+                records = []; persons = []; settings = { travelWeekendDays: 1, businessWeekendDays: 1, expiryDays: 180 };
+                refreshAll(); syncSettingsUI(); resetForm();
+                document.getElementById('importHint').textContent = '所有本地数据已清除。'; showToast('已清除全部本地数据');
+            });
+            // =========================================================
+
+            function switchTab(tabId) {
+                document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.getElementById('tab-' + tabId).classList.add('active');
+                document.querySelector(`.tab-btn[data-tab="${tabId}"]`).classList.add('active');
+                if (tabId === 'calendar') renderCalendar();
+                if (tabId === 'balance') renderBalance();
+                if (tabId === 'personnel') renderPersons();
+                if (tabId === 'export') updateExportPreview();
+            }
+
+            function syncSettingsUI() {
+                document.querySelectorAll('#travelToggle .toggle-option').forEach(el => el.classList.toggle('active', parseFloat(el.dataset.travel) === settings.travelWeekendDays));
+                document.querySelectorAll('#businessToggle .toggle-option').forEach(el => el.classList.toggle('active', parseFloat(el.dataset.business) === settings.businessWeekendDays));
+                document.getElementById('expiryDaysInput').value = settings.expiryDays;
+            }
+
+            // 初始化
+            loadFromStorage();
+            document.getElementById('batchDate').value = new Date().toISOString().slice(0, 10);
+            document.querySelector('#statusGroup .status-option[data-status="出差"]').classList.add('selected');
+            syncSettingsUI();
+
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+            document.querySelectorAll('#statusGroup .status-option').forEach(opt => {
+                opt.addEventListener('click', () => {
+                    document.querySelectorAll('#statusGroup .status-option').forEach(o => o.classList.remove('selected'));
+                    opt.classList.add('selected');
+                });
+            });
+
+            document.getElementById('saveRecordBtn').addEventListener('click', saveRecord);
+            document.getElementById('prevMonth').addEventListener('click', () => { currentMonthDate.setMonth(currentMonthDate.getMonth() - 1); renderCalendar(); });
+            document.getElementById('nextMonth').addEventListener('click', () => { currentMonthDate.setMonth(currentMonthDate.getMonth() + 1); renderCalendar(); });
+            document.getElementById('calendarPersonFilter').addEventListener('change', () => renderCalendar());
+            document.getElementById('balancePersonFilter').addEventListener('change', () => renderBalance());
+
+            document.querySelectorAll('#travelToggle .toggle-option').forEach(el => {
+                el.addEventListener('click', () => { settings.travelWeekendDays = parseFloat(el.dataset.travel); saveSettings(); syncSettingsUI(); refreshAll(); showToast(`赶路周末调休调整为 ${settings.travelWeekendDays} 天`); });
+            });
+            document.querySelectorAll('#businessToggle .toggle-option').forEach(el => {
+                el.addEventListener('click', () => { settings.businessWeekendDays = parseFloat(el.dataset.business); saveSettings(); syncSettingsUI(); refreshAll(); showToast(`出差/差休周末调休调整为 ${settings.businessWeekendDays} 天`); });
+            });
+            document.getElementById('expiryDaysInput').addEventListener('change', (e) => {
+                let val = parseInt(e.target.value, 10); if (isNaN(val) || val < 1) val = 180;
+                settings.expiryDays = val; e.target.value = val; saveSettings(); refreshAll(); showToast(`有效期变更为 ${val} 天`);
+            });
+
+            document.getElementById('addPersonBtn').addEventListener('click', addPerson);
+            document.getElementById('newPersonName').addEventListener('keypress', (e) => { if (e.key === 'Enter') addPerson(); });
+            document.getElementById('batchSaveBtn').addEventListener('click', batchSave);
+            document.getElementById('batchAddAllBtn').addEventListener('click', () => {
+                document.querySelectorAll('#batchTableBody tr').forEach(row => { const sel = row.querySelector('.batch-status'); if (sel) sel.value = '出差'; });
+                showToast('已将所有人员状态设为「出差」');
+            });
+
+            setupDateRange();
+            setupImport();
+
+            document.getElementById('backupAllBtn').addEventListener('click', () => {
+                const data = { app: '出差调休记录', version: 6, exportTime: new Date().toISOString(), owner: '© 2026 高鹤鸣 - 1277161210@qq.com', records, persons, settings };
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `出差调休_全部备份_${new Date().toISOString().slice(0,10)}.json`; a.click();
+                showToast('全部数据备份已下载');
+            });
+
+            document.getElementById('exportBtn').addEventListener('click', performExport);
+            document.querySelectorAll('#exportFormatGroup .format-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#exportFormatGroup .format-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active'); exportFormat = btn.dataset.format; updateExportPreview();
+                });
+            });
+            ['exportRecords','exportBalance','exportSummary','exportPersons','exportSettings'].forEach(id => {
+                document.getElementById(id).addEventListener('change', updateExportPreview);
+            });
+
+            refreshAll();
+            resetForm();
+            switchTab('record');
+        }
+    </script>
+</body>
+</html>
