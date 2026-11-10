@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>出差调休 · 工作记录</title>
+    <title>出差调休 · 工作记录 V7</title>
     <!-- 
         版权所有 © 2026 高鹤鸣 (1277161210@qq.com)
         本工具仅供个人使用，未经许可严禁用于商业用途、转售或二次分发。
@@ -57,6 +57,7 @@
         .tag-orange { background: #fff0e0; color: #b45309; }
         .tag-red { background: #ffe6e6; color: #b91c1c; }
         .tag-purple { background: #f3e8ff; color: #6b21a8; }
+        .tag-blue { background: #e0f2fe; color: #0369a1; }
         .record-list, .balance-list { display: flex; flex-direction: column; gap: 12px; max-height: 420px; overflow-y: auto; padding-right: 4px; }
         .record-item, .balance-item { background: #f9fcff; border: 1px solid #e7edf5; border-radius: 20px; padding: 16px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; transition: 0.1s; }
         .record-info, .balance-info { flex: 1 1 180px; }
@@ -79,9 +80,14 @@
         .cal-day { aspect-ratio: 1 / 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 12px; font-size: 0.85rem; font-weight: 500; background: white; border: 1px solid #e9eef3; color: #1a2639; transition: 0.1s; cursor: default; position: relative; user-select: none; }
         .cal-day.weekend { background: #fff8f0; border-color: #ffe0c0; }
         .cal-day.has-record { font-weight: 700; border-color: #3b82f6; background: #eef4ff; }
+        .cal-day.special-holiday { border-color: #10b981; background: #ecfdf5; }
+        .cal-day.special-workday { border-color: #f59e0b; background: #fffbeb; }
         .cal-day .dot { width: 6px; height: 6px; border-radius: 10px; background: #3b82f6; margin-top: 2px; }
         .cal-day.ot-dot .dot { background: #f59e0b; }
         .cal-multi-badge { position: absolute; top: 2px; right: 4px; font-size: 0.6rem; font-weight: 700; color: #1e40af; background: #dbeafe; border-radius: 20px; padding: 1px 5px; line-height: 1.4; }
+        .special-badge { position: absolute; top: 2px; left: 4px; font-size: 0.6rem; font-weight: 700; border-radius: 20px; padding: 1px 4px; line-height: 1.4; }
+        .special-badge.holiday { color: #047857; background: #d1fae5; }
+        .special-badge.workday { color: #b45309; background: #fef3c7; }
         .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eef2f6; gap: 12px; flex-wrap: wrap; }
         .settings-row:last-child { border-bottom: none; }
         .settings-label { font-weight: 500; color: #1a2639; font-size: 0.95rem; }
@@ -157,6 +163,10 @@
         .balance-summary-person strong { color: #1e40af; font-weight: 700; }
         .empty-person-hint { color: #b45309; background: #fffbeb; border: 1px solid #fde68a; border-radius: 16px; padding: 20px; text-align: center; font-size: 0.95rem; }
         .hidden-copyright { text-align: center; font-size: 10px; color: #e0e4ea; margin-top: 24px; user-select: none; }
+        
+        /* 特殊日期管理列表 */
+        .special-date-list { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+        .special-date-item { display: flex; justify-content: space-between; align-items: center; background: #f9fcff; border: 1px solid #e7edf5; padding: 12px 16px; border-radius: 16px; }
     </style>
 </head>
 <body>
@@ -174,13 +184,14 @@
 
     <div class="app" id="mainApp">
         <h1>🚀 出差调休 · 连续记录</h1>
-        <div class="subhead">支持连续日期勾选 · 导出按人筛选 · 调休收支按人查看</div>
+        <div class="subhead">支持连续日期勾选 · 导出按人筛选 · 调休收支按人查看 · 法定调休智能识别</div>
 
         <div class="tabs">
             <button class="tab-btn active" data-tab="record">📝 记录工作</button>
             <button class="tab-btn" data-tab="calendar">📅 日历标签</button>
             <button class="tab-btn" data-tab="balance">⚖️ 调休收支</button>
             <button class="tab-btn" data-tab="personnel">👥 人员管理</button>
+            <button class="tab-btn" data-tab="holiday">🗓️ 法定调休</button>
             <button class="tab-btn" data-tab="export">📤 数据导出</button>
             <button class="tab-btn" data-tab="import">📥 数据导入</button>
             <button class="tab-btn" data-tab="settings">⚙️ 设置</button>
@@ -255,6 +266,8 @@
                     <span><span style="display:inline-block;width:12px;height:12px;background:#fff8f0;border:1px solid #ffe0c0;border-radius:4px;"></span>周末</span>
                     <span><span style="display:inline-block;width:12px;height:12px;background:#eef4ff;border:1px solid #3b82f6;border-radius:4px;"></span>有记录</span>
                     <span><span style="display:inline-block;width:8px;height:8px;background:#f59e0b;border-radius:10px;"></span>产生调休</span>
+                    <span><span style="display:inline-block;width:12px;height:12px;background:#ecfdf5;border:1px solid #10b981;border-radius:4px;"></span>法定假日</span>
+                    <span><span style="display:inline-block;width:12px;height:12px;background:#fffbeb;border:1px solid #f59e0b;border-radius:4px;"></span>法定补班</span>
                 </div>
                 <div class="small-note" style="margin-top:8px;">💡 选择「全部人员」时，如果某天有多人记录，日期格子右上角会显示记录人数。</div>
             </div>
@@ -319,6 +332,35 @@
                     <span id="batchHint" style="font-size:0.85rem;color:#0f6e3f;"></span>
                 </div>
                 <div class="small-note">提示：状态默认「出差」，可逐行修改；工作内容可填写，留空则默认为“出差”。</div>
+            </div>
+        </div>
+
+        <!-- 法定调休日管理（新增） -->
+        <div id="tab-holiday" class="tab-pane">
+            <div class="card">
+                <div class="card-title">🗓️ 添加特殊日期</div>
+                <div style="font-size:0.85rem;color:#6b7b94;margin-bottom:16px;">
+                    遇到国家法定节假日或周末补班时，在这里添加。系统会优先根据这里的设置来计算是否产生调休。
+                </div>
+                <div class="flex-inline" style="margin-bottom: 16px; gap: 16px;">
+                    <div class="field-row" style="flex:1; margin-bottom:0;">
+                        <label>日期</label>
+                        <input type="date" id="specialDateInput">
+                    </div>
+                    <div class="field-row" style="flex:1; margin-bottom:0;">
+                        <label>类型</label>
+                        <select id="specialTypeInput">
+                            <option value="holiday">法定节假日（算休息日，出差/赶路有调休）</option>
+                            <option value="workday">法定补班日（算工作日，出差/赶路无调休）</option>
+                        </select>
+                    </div>
+                    <button class="btn" id="addSpecialDateBtn" style="margin-top: 22px;">添加</button>
+                </div>
+                
+                <div class="card-title" style="margin-top:24px; font-size:0.95rem;">已设置的日期</div>
+                <div id="specialDateList" class="special-date-list">
+                    <div class="empty-state" style="padding:16px;">暂无特殊日期设置</div>
+                </div>
             </div>
         </div>
 
@@ -417,7 +459,6 @@
 
     <script>
         // ================= 访问验证逻辑 =================
-        // 你的专属密码（已修改为你提供的新密码）
         const ACCESS_PASSWORD = 'heming1235789'; 
         const AUTH_KEY = '__auth_granted_time';
         const AUTH_VALID_DAYS = 30;
@@ -468,40 +509,70 @@
             if (appInitialized) return;
             appInitialized = true;
 
-            const STORAGE_KEY = 'overtime_leave_records_v6';
-            const SETTINGS_KEY = 'overtime_leave_settings_v6';
-            const PERSON_KEY = 'overtime_leave_persons_v6';
+            // 新增了 specialDates 存储法定调休
+            const STORAGE_KEY = 'overtime_leave_records_v7';
+            const SETTINGS_KEY = 'overtime_leave_settings_v7';
+            const PERSON_KEY = 'overtime_leave_persons_v7';
+            const SPECIAL_KEY = 'overtime_leave_special_v7';
 
             let settings = { travelWeekendDays: 1, businessWeekendDays: 1, expiryDays: 180 };
             let records = [];
             let persons = [];
+            let specialDates = []; // { date: '2026-10-01', type: 'holiday'/'workday' }
 
             function loadFromStorage() {
                 try {
-                    let storedRecords = localStorage.getItem(STORAGE_KEY);
-                    let storedSettings = localStorage.getItem(SETTINGS_KEY);
-                    let storedPersons = localStorage.getItem(PERSON_KEY);
+                    // 兼容 V6 数据
+                    const v6Records = localStorage.getItem('overtime_leave_records_v6');
+                    const v6Settings = localStorage.getItem('overtime_leave_settings_v6');
+                    const v6Persons = localStorage.getItem('overtime_leave_persons_v6');
+
+                    let storedRecords = localStorage.getItem(STORAGE_KEY) || v6Records;
+                    let storedSettings = localStorage.getItem(SETTINGS_KEY) || v6Settings;
+                    let storedPersons = localStorage.getItem(PERSON_KEY) || v6Persons;
+                    let storedSpecial = localStorage.getItem(SPECIAL_KEY);
 
                     if (storedRecords) { records = JSON.parse(storedRecords); if (!Array.isArray(records)) records = []; }
                     if (storedSettings) { settings = { ...settings, ...JSON.parse(storedSettings) }; }
                     if (storedPersons) { persons = JSON.parse(storedPersons); if (!Array.isArray(persons)) persons = []; }
-                } catch (e) { console.warn('读取存储失败', e); records = []; persons = []; }
+                    if (storedSpecial) { specialDates = JSON.parse(storedSpecial); if (!Array.isArray(specialDates)) specialDates = []; }
+                } catch (e) { console.warn('读取存储失败', e); records = []; persons = []; specialDates = []; }
             }
 
             function saveRecords() { localStorage.setItem(STORAGE_KEY, JSON.stringify(records)); }
             function saveSettings() { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
             function savePersons() { localStorage.setItem(PERSON_KEY, JSON.stringify(persons)); }
+            function saveSpecial() { localStorage.setItem(SPECIAL_KEY, JSON.stringify(specialDates)); }
 
-            function isWeekend(dateStr) {
-                const d = new Date(dateStr + 'T00:00:00');
-                return d.getDay() === 0 || d.getDay() === 6;
+            // 获取特殊日期类型
+            function getSpecialType(dateStr) {
+                const found = specialDates.find(s => s.date === dateStr);
+                return found ? found.type : null;
             }
 
+            // 核心计算逻辑更新：优先判断法定调休
             function calcLeaveDays(dateStr, status) {
-                if (!dateStr || !isWeekend(dateStr)) return 0;
-                if (status === '出差') return settings.businessWeekendDays;
+                if (!dateStr) return 0;
+                
+                const specialType = getSpecialType(dateStr);
+                let isDayOff = false; // 这一天算不算休息日（法定假日或周末）
+
+                if (specialType === 'holiday') {
+                    isDayOff = true; // 法定节假日，算休息日
+                } else if (specialType === 'workday') {
+                    isDayOff = false; // 法定补班，算工作日
+                } else {
+                    // 正常周末判断
+                    const d = new Date(dateStr + 'T00:00:00');
+                    isDayOff = d.getDay() === 0 || d.getDay() === 6;
+                }
+
+                // 如果这一天是工作日，或者状态是“在家”，不产生调休
+                if (!isDayOff || status === '在家') return 0;
+
+                // 出差 / 赶路 / 差休 产生调休
+                if (status === '出差' || status === '差休') return settings.businessWeekendDays;
                 if (status === '赶路') return settings.travelWeekendDays;
-                if (status === '差休') return settings.businessWeekendDays;
                 return 0;
             }
 
@@ -545,6 +616,68 @@
                     current.setDate(current.getDate() + 1);
                 }
                 return dates;
+            }
+
+            // --- 渲染逻辑 ---
+            function renderSpecialDates() {
+                const container = document.getElementById('specialDateList');
+                if (specialDates.length === 0) {
+                    container.innerHTML = '<div class="empty-state" style="padding:16px;">暂无特殊日期设置</div>';
+                    return;
+                }
+                const sorted = [...specialDates].sort((a, b) => a.date.localeCompare(b.date));
+                container.innerHTML = sorted.map(item => {
+                    const isHoliday = item.type === 'holiday';
+                    const typeName = isHoliday ? '法定节假日 (算休息日)' : '法定补班日 (算工作日)';
+                    const colorClass = isHoliday ? 'tag-green' : 'tag-orange';
+                    return `
+                    <div class="special-date-item">
+                        <div>
+                            <span style="font-weight:600; font-size:0.95rem;">${formatDate(item.date)}</span>
+                            <span class="tag ${colorClass}" style="margin-left: 8px;">${typeName}</span>
+                        </div>
+                        <button class="icon-btn delete-special-btn" data-date="${item.date}" title="删除">🗑️</button>
+                    </div>`;
+                }).join('');
+
+                container.querySelectorAll('.delete-special-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const dateStr = e.currentTarget.dataset.date;
+                        removeSpecialDate(dateStr);
+                    });
+                });
+            }
+
+            function addSpecialDate() {
+                const dateInput = document.getElementById('specialDateInput');
+                const typeInput = document.getElementById('specialTypeInput');
+                const date = dateInput.value;
+                const type = typeInput.value;
+                if (!date) { alert('请选择日期'); return; }
+                
+                const existingIndex = specialDates.findIndex(s => s.date === date);
+                if (existingIndex !== -1) {
+                    specialDates[existingIndex].type = type;
+                } else {
+                    specialDates.push({ date, type });
+                }
+                saveSpecial();
+                renderSpecialDates();
+                renderCalendar();
+                renderRecords();
+                renderBalance();
+                showToast('特殊日期设置成功');
+                dateInput.value = '';
+            }
+
+            function removeSpecialDate(dateStr) {
+                specialDates = specialDates.filter(s => s.date !== dateStr);
+                saveSpecial();
+                renderSpecialDates();
+                renderCalendar();
+                renderRecords();
+                renderBalance();
+                showToast('已删除特殊日期');
             }
 
             // 渲染人员
@@ -639,19 +772,25 @@
                 const sorted = [...records].sort((a, b) => b.date.localeCompare(a.date));
                 container.innerHTML = sorted.map((rec) => {
                     const leaveDays = calcLeaveDays(rec.date, rec.status);
-                    const weekend = isWeekend(rec.date);
+                    const specialType = getSpecialType(rec.date);
+                    
+                    let dayFlag = '';
+                    if (specialType === 'holiday') dayFlag = ' · <span style="color:#10b981;font-weight:bold;">法定假日</span>';
+                    else if (specialType === 'workday') dayFlag = ' · <span style="color:#f59e0b;font-weight:bold;">法定补班</span>';
+                    else if (new Date(rec.date + 'T00:00:00').getDay() === 0 || new Date(rec.date + 'T00:00:00').getDay() === 6) dayFlag = ' · 周末';
+
                     let statusTag = '';
                     if (rec.status === '出差') statusTag = '<span class="tag">出差</span>';
                     else if (rec.status === '在家') statusTag = '<span class="tag" style="background:#e2e8f0;color:#4a5a72;">在家</span>';
                     else if (rec.status === '赶路') statusTag = '<span class="tag tag-orange">赶路</span>';
                     else if (rec.status === '差休') statusTag = '<span class="tag tag-purple">差休</span>';
-                    const weekendFlag = weekend ? ' · 周末' : '';
+                    
                     const leaveFlag = leaveDays > 0 ? ` · +${leaveDays}天调休` : '';
                     const personTag = rec.person ? `<span class="tag tag-green" style="margin-left:4px;">${escapeHtml(rec.person)}</span>` : '';
                     return `
                     <div class="record-item" data-id="${rec.id}">
                         <div class="record-info">
-                            <div class="record-date">${formatDate(rec.date)} ${personTag} ${statusTag}<span style="font-size:0.75rem;color:#6b7b94;">${weekendFlag}${leaveFlag}</span></div>
+                            <div class="record-date">${formatDate(rec.date)} ${personTag} ${statusTag}<span style="font-size:0.75rem;color:#6b7b94;">${dayFlag}${leaveFlag}</span></div>
                             <div class="record-desc">${escapeHtml(rec.content) || '无内容'}</div>
                         </div>
                         <div class="record-actions">
@@ -724,22 +863,38 @@
                 for (let i = 0; i < startWeekday; i++) html += `<div class="cal-day" style="opacity:0.3;background:#f8fafd;border-color:#f0f4fa;"></div>`;
                 for (let d = 1; d <= daysInMonth; d++) {
                     const dateStr = `${year}-${String(month+1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                    const weekend = (new Date(year, month, d).getDay() === 0 || new Date(year, month, d).getDay() === 6);
+                    const specialType = getSpecialType(dateStr);
+                    let isWeekendDay = (new Date(year, month, d).getDay() === 0 || new Date(year, month, d).getDay() === 6);
+                    
                     const dayRecords = recordsByDate.get(dateStr) || [];
                     const hasRecord = dayRecords.length > 0;
                     let hasLeave = false, totalLeave = 0;
                     dayRecords.forEach(r => { const ld = calcLeaveDays(r.date, r.status); if (ld > 0) { hasLeave = true; totalLeave += ld; } });
+                    
                     let classes = 'cal-day';
-                    if (weekend) classes += ' weekend';
+                    let specialBadge = '';
+                    
+                    if (specialType === 'holiday') {
+                        classes += ' special-holiday';
+                        specialBadge = '<span class="special-badge holiday">假</span>';
+                    } else if (specialType === 'workday') {
+                        classes += ' special-workday';
+                        specialBadge = '<span class="special-badge workday">班</span>';
+                    } else if (isWeekendDay) {
+                        classes += ' weekend';
+                    }
+                    
                     if (hasRecord) classes += ' has-record';
                     if (hasLeave) classes += ' ot-dot';
+                    
                     let title = '无记录';
                     if (hasRecord) {
                         const names = [...new Set(dayRecords.map(r => r.person || '未署名'))].join('、');
                         const statuses = [...new Set(dayRecords.map(r => r.status))].join('/');
                         title = `${names} · ${statuses}${hasLeave ? ` · 调休+${totalLeave}` : ''}`;
                     }
-                    html += `<div class="${classes}" title="${escapeHtml(title)}"><span>${d}</span>`;
+                    
+                    html += `<div class="${classes}" title="${escapeHtml(title)}">${specialBadge}<span>${d}</span>`;
                     if (hasRecord) {
                         if (!showAll && dayRecords.length === 1) html += `<span class="dot" style="background:${hasLeave ? '#f59e0b' : '#3b82f6'};"></span>`;
                         else if (showAll) {
@@ -753,7 +908,7 @@
                 document.getElementById('monthLabel').textContent = `${year}年 ${month+1}月`;
             }
 
-            function refreshAll() { renderRecords(); renderBalance(); renderCalendar(); renderPersons(); }
+            function refreshAll() { renderRecords(); renderBalance(); renderCalendar(); renderPersons(); renderSpecialDates(); }
 
             let selectedDates = new Set();
             function renderDateCheckboxes() {
@@ -770,10 +925,19 @@
                 if (dateList.length === 0) { container.innerHTML = '<span style="color:#8b9bb5;font-size:0.9rem;">请先选择连续日期或直接勾选</span>'; return; }
                 container.innerHTML = dateList.map(dateStr => {
                     const checked = selectedDates.has(dateStr);
-                    const isWeekendDay = isWeekend(dateStr);
-                    return `<label style="display:flex;align-items:center;gap:6px;background:${checked?'#dbeafe':'#ffffff'};padding:6px 12px;border-radius:30px;border:1px solid ${checked?'#3b82f6':'#e2e8f0'};font-size:0.85rem;cursor:pointer;transition:0.1s;${isWeekendDay?'color:#b45309;':''}">
+                    const specialType = getSpecialType(dateStr);
+                    let labelSuffix = '';
+                    let textColor = '';
+                    
+                    if (specialType === 'holiday') { labelSuffix = '假'; textColor = 'color:#10b981;'; }
+                    else if (specialType === 'workday') { labelSuffix = '班'; textColor = 'color:#f59e0b;'; }
+                    else if (new Date(dateStr + 'T00:00:00').getDay() === 0 || new Date(dateStr + 'T00:00:00').getDay() === 6) {
+                        labelSuffix = '周末'; textColor = 'color:#b45309;';
+                    }
+
+                    return `<label style="display:flex;align-items:center;gap:6px;background:${checked?'#dbeafe':'#ffffff'};padding:6px 12px;border-radius:30px;border:1px solid ${checked?'#3b82f6':'#e2e8f0'};font-size:0.85rem;cursor:pointer;transition:0.1s;${textColor}">
                         <input type="checkbox" class="date-checkbox" value="${dateStr}" ${checked?'checked':''} style="width:16px;height:16px;accent-color:#3b82f6;margin:0;">
-                        ${dateStr.slice(5)} ${isWeekendDay?'周末':''}
+                        ${dateStr.slice(5)} ${labelSuffix}
                     </label>`;
                 }).join('');
                 container.querySelectorAll('.date-checkbox').forEach(cb => {
@@ -909,65 +1073,40 @@
                 document.getElementById('batchHint').textContent = hint; showToast(hint);
             }
 
-            // ================= 新增/修复的完整导出导入逻辑 =================
+            // 导出导入逻辑
             let exportFormat = 'csv';
-
             function renderExportPersonCheckboxes() {
                 const grid = document.getElementById('exportPersonCheckboxGrid');
-                if (persons.length === 0) {
-                    grid.innerHTML = '<span style="color:#8b9bb5;font-size:0.9rem;">暂无人员</span>';
-                    return;
-                }
-                grid.innerHTML = persons.map(p => `
-                    <label class="person-checkbox-item checked" data-person="${escapeHtml(p)}">
-                        <input type="checkbox" class="export-person-checkbox" value="${escapeHtml(p)}" checked>
-                        ${escapeHtml(p)}
-                    </label>
-                `).join('');
-
+                if (persons.length === 0) { grid.innerHTML = '<span style="color:#8b9bb5;font-size:0.9rem;">暂无人员</span>'; return; }
+                grid.innerHTML = persons.map(p => `<label class="person-checkbox-item checked" data-person="${escapeHtml(p)}"><input type="checkbox" class="export-person-checkbox" value="${escapeHtml(p)}" checked>${escapeHtml(p)}</label>`).join('');
                 grid.querySelectorAll('.export-person-checkbox').forEach(cb => {
                     cb.addEventListener('change', (e) => {
                         const label = e.target.closest('.person-checkbox-item');
-                        if (e.target.checked) label.classList.add('checked');
-                        else label.classList.remove('checked');
+                        if (e.target.checked) label.classList.add('checked'); else label.classList.remove('checked');
                         updateExportPreview();
                     });
                 });
-
                 document.querySelectorAll('#exportPersonQuickSelect button').forEach(btn => {
                     btn.addEventListener('click', () => {
                         const action = btn.dataset.action;
                         const checkboxes = grid.querySelectorAll('.export-person-checkbox');
                         if (action === 'all') checkboxes.forEach(cb => { cb.checked = true; cb.closest('.person-checkbox-item').classList.add('checked'); });
                         else if (action === 'none') checkboxes.forEach(cb => { cb.checked = false; cb.closest('.person-checkbox-item').classList.remove('checked'); });
-                        else if (action === 'invert') checkboxes.forEach(cb => {
-                            cb.checked = !cb.checked;
-                            if (cb.checked) cb.closest('.person-checkbox-item').classList.add('checked');
-                            else cb.closest('.person-checkbox-item').classList.remove('checked');
-                        });
+                        else if (action === 'invert') checkboxes.forEach(cb => { cb.checked = !cb.checked; if (cb.checked) cb.closest('.person-checkbox-item').classList.add('checked'); else cb.closest('.person-checkbox-item').classList.remove('checked'); });
                         updateExportPreview();
                     });
                 });
             }
 
-            function getSelectedExportPersons() {
-                return [...document.querySelectorAll('.export-person-checkbox:checked')].map(cb => cb.value);
-            }
+            function getSelectedExportPersons() { return [...document.querySelectorAll('.export-person-checkbox:checked')].map(cb => cb.value); }
 
             function updateExportPreview() {
-                const checks = [
-                    { id: 'exportRecords', label: '工作记录' },
-                    { id: 'exportBalance', label: '调休收支明细' },
-                    { id: 'exportSummary', label: '调休汇总' },
-                    { id: 'exportPersons', label: '人员名单' },
-                    { id: 'exportSettings', label: '规则设置' }
-                ];
+                const checks = [{ id: 'exportRecords', label: '工作记录' }, { id: 'exportBalance', label: '调休收支明细' }, { id: 'exportSummary', label: '调休汇总' }, { id: 'exportPersons', label: '人员名单' }, { id: 'exportSettings', label: '规则设置' }];
                 const selected = checks.filter(c => document.getElementById(c.id).checked).map(c => c.label);
                 const selectedPersons = getSelectedExportPersons();
                 const preview = document.getElementById('exportPreview');
-                if (selected.length === 0) {
-                    preview.innerHTML = `<strong>预览：</strong>请至少选择一项导出内容。`;
-                } else {
+                if (selected.length === 0) preview.innerHTML = `<strong>预览：</strong>请至少选择一项导出内容。`;
+                else {
                     let personText = selectedPersons.length === 0 ? '（未选人员，将导出全部人员的数据）' : (selectedPersons.length === persons.length ? '（全部人员）' : `（已选 ${selectedPersons.length} 人）`);
                     preview.innerHTML = `<strong>预览：</strong>将导出 ${selected.length} 个数据表${personText}，格式为 ${exportFormat === 'csv' ? 'CSV 工作表' : 'JSON 数据'}。`;
                 }
@@ -986,8 +1125,7 @@
             function downloadFile(filename, content, mimeType) {
                 const blob = new Blob([content], { type: mimeType || 'text/plain;charset=utf-8' });
                 const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+                const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
             }
 
             function performExport() {
@@ -1011,10 +1149,13 @@
                 if (exportFormat === 'csv') {
                     let fileCount = 0;
                     if (doRecords) {
-                        const headers = ['日期', '人员', '状态', '工作内容', '调休天数', '是否周末'];
-                        const rows = exportRecordsList.map(r => [r.date, r.person || '', r.status, r.content || '', calcLeaveDays(r.date, r.status), isWeekend(r.date) ? '是' : '否']);
-                        downloadFile(`工作记录_${timestamp}.csv`, makeCSV(headers, rows), 'text/csv;charset=utf-8');
-                        fileCount++;
+                        const headers = ['日期', '人员', '状态', '工作内容', '调休天数', '是否周末/特殊'];
+                        const rows = exportRecordsList.map(r => {
+                            const sp = getSpecialType(r.date);
+                            let dayStr = sp === 'holiday' ? '法定假日' : (sp === 'workday' ? '法定补班' : (new Date(r.date+'T00:00:00').getDay()===0||new Date(r.date+'T00:00:00').getDay()===6 ? '周末' : '工作日'));
+                            return [r.date, r.person || '', r.status, r.content || '', calcLeaveDays(r.date, r.status), dayStr];
+                        });
+                        downloadFile(`工作记录_${timestamp}.csv`, makeCSV(headers, rows), 'text/csv;charset=utf-8'); fileCount++;
                     }
                     if (doBalance) {
                         const headers = ['记录日期', '人员', '状态', '产生调休天数', '到期日', '剩余天数', '状态'];
@@ -1027,8 +1168,7 @@
                             rows.push([r.date, r.person || '', r.status, days, expiry, remaining, remaining < 0 ? '已失效' : '有效']);
                         });
                         rows.sort((a, b) => a[4].localeCompare(b[4]));
-                        downloadFile(`调休收支明细_${timestamp}.csv`, makeCSV(headers, rows), 'text/csv;charset=utf-8');
-                        fileCount++;
+                        downloadFile(`调休收支明细_${timestamp}.csv`, makeCSV(headers, rows), 'text/csv;charset=utf-8'); fileCount++;
                     }
                     if (doSummary) {
                         let totalActive = 0, expiring30 = 0;
@@ -1042,23 +1182,19 @@
                         });
                         const headers = ['指标', '数值'];
                         const rows = [['当前有效调休总天数', totalActive.toFixed(1).replace(/\.0$/, '')], ['近30天内过期天数', expiring30.toFixed(1).replace(/\.0$/, '')], ['导出时间', new Date().toLocaleString()]];
-                        downloadFile(`调休汇总_${timestamp}.csv`, makeCSV(headers, rows), 'text/csv;charset=utf-8');
-                        fileCount++;
+                        downloadFile(`调休汇总_${timestamp}.csv`, makeCSV(headers, rows), 'text/csv;charset=utf-8'); fileCount++;
                     }
                     if (doPersons) {
                         const headers = ['人员姓名'];
                         const rows = exportPersonsList.map(p => [p]);
-                        downloadFile(`人员名单_${timestamp}.csv`, makeCSV(headers, rows), 'text/csv;charset=utf-8');
-                        fileCount++;
+                        downloadFile(`人员名单_${timestamp}.csv`, makeCSV(headers, rows), 'text/csv;charset=utf-8'); fileCount++;
                     }
                     if (doSettings) {
                         const headers = ['设置项', '值'];
                         const rows = [['赶路占用周末调休天数', settings.travelWeekendDays], ['出差占用周末调休天数', settings.businessWeekendDays], ['调休有效期（天）', settings.expiryDays]];
-                        downloadFile(`规则设置_${timestamp}.csv`, makeCSV(headers, rows), 'text/csv;charset=utf-8');
-                        fileCount++;
+                        downloadFile(`规则设置_${timestamp}.csv`, makeCSV(headers, rows), 'text/csv;charset=utf-8'); fileCount++;
                     }
-                    hintEl.textContent = `✅ 已导出 ${fileCount} 个 CSV 文件，请查看浏览器下载。`;
-                    showToast(`已导出 ${fileCount} 个文件`);
+                    hintEl.textContent = `✅ 已导出 ${fileCount} 个 CSV 文件，请查看浏览器下载。`; showToast(`已导出 ${fileCount} 个文件`);
                 } else {
                     const exportData = { exportTime: new Date().toISOString(), format: 'json', owner: '© 2026 高鹤鸣 - 1277161210@qq.com' };
                     if (doRecords) exportData.records = exportRecordsList;
@@ -1087,12 +1223,10 @@
                     if (doPersons) exportData.persons = exportPersonsList;
                     if (doSettings) exportData.settings = settings;
                     downloadFile(`调休数据_${timestamp}.json`, JSON.stringify(exportData, null, 2), 'application/json;charset=utf-8');
-                    hintEl.textContent = `✅ 已导出 JSON 文件。`;
-                    showToast(`已导出 JSON 文件`);
+                    hintEl.textContent = `✅ 已导出 JSON 文件。`; showToast(`已导出 JSON 文件`);
                 }
             }
 
-            // 导入逻辑
             let pendingImportData = null;
             function setupImport() {
                 const importArea = document.getElementById('importArea'), fileInput = document.getElementById('importFileInput');
@@ -1140,7 +1274,8 @@
                         }
                         if (Array.isArray(data.persons)) persons = data.persons.filter(p => typeof p === 'string');
                         if (data.settings && typeof data.settings === 'object') settings = { ...settings, ...data.settings };
-                        saveRecords(); savePersons(); saveSettings();
+                        if (Array.isArray(data.specialDates)) specialDates = data.specialDates;
+                        saveRecords(); savePersons(); saveSettings(); saveSpecial();
                         refreshAll(); syncSettingsUI(); resetForm();
                         hintEl.textContent = `✅ 导入成功！已恢复 ${records.length} 条记录、${persons.length} 位人员。`;
                         showToast('数据导入成功'); resetImportUI(); switchTab('record');
@@ -1151,12 +1286,11 @@
             document.getElementById('clearAllBtn').addEventListener('click', () => {
                 if (!confirm('确定清除所有本地数据吗？此操作不可撤销，建议先导出备份。')) return;
                 if (!confirm('再次确认：所有记录、人员和设置都将被删除！')) return;
-                localStorage.removeItem(STORAGE_KEY); localStorage.removeItem(SETTINGS_KEY); localStorage.removeItem(PERSON_KEY);
-                records = []; persons = []; settings = { travelWeekendDays: 1, businessWeekendDays: 1, expiryDays: 180 };
+                localStorage.removeItem(STORAGE_KEY); localStorage.removeItem(SETTINGS_KEY); localStorage.removeItem(PERSON_KEY); localStorage.removeItem(SPECIAL_KEY);
+                records = []; persons = []; specialDates = []; settings = { travelWeekendDays: 1, businessWeekendDays: 1, expiryDays: 180 };
                 refreshAll(); syncSettingsUI(); resetForm();
                 document.getElementById('importHint').textContent = '所有本地数据已清除。'; showToast('已清除全部本地数据');
             });
-            // =========================================================
 
             function switchTab(tabId) {
                 document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
@@ -1166,6 +1300,7 @@
                 if (tabId === 'calendar') renderCalendar();
                 if (tabId === 'balance') renderBalance();
                 if (tabId === 'personnel') renderPersons();
+                if (tabId === 'holiday') renderSpecialDates();
                 if (tabId === 'export') updateExportPreview();
             }
 
@@ -1214,11 +1349,13 @@
                 showToast('已将所有人员状态设为「出差」');
             });
 
+            document.getElementById('addSpecialDateBtn').addEventListener('click', addSpecialDate);
+
             setupDateRange();
             setupImport();
 
             document.getElementById('backupAllBtn').addEventListener('click', () => {
-                const data = { app: '出差调休记录', version: 6, exportTime: new Date().toISOString(), owner: '© 2026 高鹤鸣 - 1277161210@qq.com', records, persons, settings };
+                const data = { app: '出差调休记录', version: 7, exportTime: new Date().toISOString(), owner: '© 2026 高鹤鸣 - 1277161210@qq.com', records, persons, settings, specialDates };
                 const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
                 const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `出差调休_全部备份_${new Date().toISOString().slice(0,10)}.json`; a.click();
                 showToast('全部数据备份已下载');
